@@ -15,7 +15,7 @@ Módulo para jogar Fiasco Classic no Foundry VTT (v12 e v13), em qualquer sistem
 | Criar dados / Rolar todos | Botões no topo da aba **Atores** (só GM) |
 | Mapa de Relações | Botão **Mapa** na aba Atores ou dentro da ficha |
 | Botão de rolar no token | Clique direito no dado → ícone de dado |
-| Importar Playset | Botão no topo da aba **Diários** (só GM) |
+| Importar Cenário | Botão no topo da aba **Diários** (só GM) |
 
 ## Ligar e desligar partes
 *Configurações → Configurar Módulos → Fiasco: Mesa.* Cada parte tem uma caixa própria. Se desligar uma ficha, ela vira a **ficha simples**, sem quebrar nada. Algumas opções recarregam a página.
@@ -43,18 +43,18 @@ FiascoMesa.abrirMapa();           // abre o mapa de relações
 ## Trocar as imagens dos dados
 Coloque suas 12 imagens em qualquer pasta, com nomes `branco-1.png` … `preto-6.png`, e mude **Imagens das faces** nas configurações. Exemplo: `worlds/meu-mundo/dados/{cor}-{valor}.png`.
 
-## Playsets
-O botão **Importar Playset** lê um arquivo `.json` e cria:
+## Cenários (playsets)
+O botão **Importar Cenário** lê um arquivo `.json` e cria:
 - um **Diário** com Visão geral, as 4 tabelas e a Preparação rápida;
-- 4 **Tabelas de Rolagem** (Relações, Necessidades, Locações, Objetos), cada uma com 36 resultados. A fórmula `(1d6 - 1) * 6 + 1d6` sorteia categoria e item de uma vez.
+- 4 **Tabelas de Rolagem** (Relações, Necessidades, Locações, Objetos), cada uma com 36 resultados. A fórmula `(1d6 - 1) * 6 + 1d6` sorteia Categoria e Elemento de uma vez.
 
-Para outro playset, mande o PDF para o Claude e peça o `.json` no formato `fiasco-mesa-playset-1`.
+Para outro Cenário, mande o PDF para o Claude e peça o `.json` no formato `fiasco-mesa-playset-1`.
 
 ### Formato do arquivo
 ```json
 {
   "formato": "fiasco-mesa-playset-1",
-  "titulo": "Nome do playset",
+  "titulo": "Nome do Cenário",
   "subtitulo": "opcional",
   "introducao": "Parágrafos separados por linha em branco",
   "regrasEspeciais": ["opcional"],
@@ -67,10 +67,10 @@ Para outro playset, mande o PDF para o Claude e peça o `.json` no formato `fias
     { "tabela": "Relações", "grupos": [ { "rotulo": "Para três jogadores", "itens": ["..."] } ] }
   ],
   "tabelasExtras": [
-    { "nome": "Tilt", "formula": "1d6", "descricao": "opcional", "resultados": [ { "faixa": [1, 1], "texto": "..." } ] }
+    { "nome": "Exemplo", "formula": "1d6", "descricao": "opcional", "resultados": [ { "faixa": [1, 1], "texto": "..." } ] }
   ]
 }
 ```
-`tabelasExtras` serve para Tilt, Aftermath ou qualquer tabela com outra fórmula.
+`tabelasExtras` serve para tabelas com outra fórmula. Sem `formula`, a tabela vai só para o Diário (como a Conclusão).
 
-> Os playsets são material com direitos autorais. Use os arquivos só no seu mundo, a partir de cópias que você comprou.
+> Os Cenários são material com direitos autorais. Use os arquivos só no seu mundo, a partir de cópias que você comprou.

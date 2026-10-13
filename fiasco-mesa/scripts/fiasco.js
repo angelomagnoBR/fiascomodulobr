@@ -1,6 +1,6 @@
 /**
  * Fiasco: Mesa — módulo para Foundry VTT (v12/v13)
- * Ficha de jogador, ficha de dado, pool de dados com Dice So Nice e importador de playsets.
+ * Ficha de jogador, ficha de dado, pool de dados com Dice So Nice e importador de Cenários.
  * Cada parte pode ser ligada/desligada em Configurações > Configurar Módulos > Fiasco: Mesa.
  */
 
@@ -30,7 +30,7 @@ const OPCOES = {
   criarDados:   { name: "Botões de dados", hint: "Mostra os botões 'Criar dados' e 'Rolar todos' na aba de Atores (só GM).", type: Boolean, default: true, reload: true },
   hudDado:      { name: "Botão de rolar no token", hint: "Adiciona um botão de rolar no HUD do token de dado (rola todos os dados selecionados).", type: Boolean, default: true, reload: true },
   mapa:         { name: "Mapa de Relações", hint: "Habilita a janela com o mapa de relações de todos os jogadores.", type: Boolean, default: true, reload: true },
-  importador:   { name: "Importador de Playset", hint: "Mostra o botão 'Importar Playset' na aba de Diários (só GM).", type: Boolean, default: true, reload: true },
+  importador:   { name: "Importador de Cenário", hint: "Mostra o botão 'Importar Cenário' na aba de Diários (só GM).", type: Boolean, default: true, reload: true },
   diceSoNice:   { name: "Usar Dice So Nice", hint: "Anima a rolagem em 3D com dados brancos e pretos (precisa do módulo Dice So Nice).", type: Boolean, default: true, reload: false },
   mensagemChat: { name: "Mensagem no chat", hint: "Mostra no chat o resultado de cada rolagem de dados.", type: Boolean, default: true, reload: false },
   tamanhoDado:  { name: "Tamanho do token de dado", hint: "Em quadrados da grade (ex.: 1 = um quadrado, 1.5 = um quadrado e meio). Muda na hora os dados que já estão na mesa.", type: Number, default: 1, reload: false, onChange: () => redimensionarDados() },
@@ -491,7 +491,7 @@ function abrirMapa() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Importador de playset                                              */
+/*  Importador de Cenário                                              */
 /* ------------------------------------------------------------------ */
 
 const esc = (s) => foundry.utils.escapeHTML ? foundry.utils.escapeHTML(String(s ?? "")) : String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -501,7 +501,7 @@ function htmlTabela(tab) {
   const cats = tab.categorias.map((c, i) => `
     <h2>${i + 1}. ${esc(c.nome)}</h2>
     <ol>${c.itens.map((it) => `<li>${esc(it)}</li>`).join("")}</ol>`).join("");
-  return `<p><em>Escolha a categoria com um dado e o item com outro.</em></p>${cats}`;
+  return `<p><em>Escolha a Categoria com um dado e o Elemento com outro.</em></p>${cats}`;
 }
 
 function resultadoTabela(texto, faixa) {
@@ -512,7 +512,7 @@ function resultadoTabela(texto, faixa) {
 }
 
 async function importarPlayset(dados) {
-  if (!dados?.titulo || !Array.isArray(dados.tabelas)) throw new Error("Arquivo não parece um playset do Fiasco: Mesa.");
+  if (!dados?.titulo || !Array.isArray(dados.tabelas)) throw new Error("Arquivo não parece um Cenário do Fiasco: Mesa.");
   const titulo = dados.titulo;
 
   const pastaJ = await Folder.create({ name: `Fiasco — ${titulo}`, type: "JournalEntry" });
@@ -523,7 +523,7 @@ async function importarPlayset(dados) {
   const visao = [
     dados.subtitulo ? `<h2>${esc(dados.subtitulo)}</h2>` : "",
     paragrafos(dados.introducao),
-    dados.regrasEspeciais?.length ? `<h2>Regras do playset</h2><ul>${dados.regrasEspeciais.map((r) => `<li>${esc(r)}</li>`).join("")}</ul>` : "",
+    dados.regrasEspeciais?.length ? `<h2>Regras do Cenário</h2><ul>${dados.regrasEspeciais.map((r) => `<li>${esc(r)}</li>`).join("")}</ul>` : "",
     dados.movieNight ? `<h2>Movie Night</h2><p>${esc(dados.movieNight)}</p>` : "",
     dados.creditos ? `<hr><p class="fiasco-creditos"><small>${esc(dados.creditos)}</small></p>` : ""
   ].join("");
@@ -538,12 +538,12 @@ async function importarPlayset(dados) {
   }
   for (const extra of dados.tabelasExtras ?? []) {
     const html = `${paragrafos(extra.descricao)}<table><thead><tr><th>Resultado</th><th>Efeito</th></tr></thead><tbody>${
-      extra.resultados.map((r) => `<tr><td>${r.faixa[0] === r.faixa[1] ? r.faixa[0] : `${r.faixa[0]}–${r.faixa[1]}`}</td><td>${esc(r.texto)}</td></tr>`).join("")}</tbody></table>`;
+      extra.resultados.map((r) => `<tr><td>${r.faixa[0] === r.faixa[1] ? r.faixa[0] : r.faixa[1] >= 99 ? `${r.faixa[0]}+` : `${r.faixa[0]}–${r.faixa[1]}`}</td><td>${esc(r.texto)}</td></tr>`).join("")}</tbody></table>`;
     paginas.push({ name: extra.nome, type: "text", text: { content: html } });
   }
 
   const diario = await JournalEntry.create({
-    name: `Playset: ${titulo}`, folder: pastaJ.id,
+    name: `Cenário: ${titulo}`, folder: pastaJ.id,
     ownership: { default: CONST.DOCUMENT_OWNERSHIP_LEVELS.OBSERVER },
     pages: paginas
   });
@@ -558,12 +558,13 @@ async function importarPlayset(dados) {
     await RollTable.create({
       name: `${titulo}: ${tab.nome}`, folder: pastaT.id,
       formula: "(1d6 - 1) * 6 + 1d6",
-      description: `Categoria (1º dado) e item (2º dado) do playset ${titulo}.`,
+      description: `Categoria (1º dado) e Elemento (2º dado) do Cenário ${titulo}.`,
       ownership: { default: CONST.DOCUMENT_OWNERSHIP_LEVELS.OBSERVER },
       results
     });
   }
   for (const extra of dados.tabelasExtras ?? []) {
+    if (!extra.formula) continue; // tabela só de consulta (ex.: Conclusão): fica apenas no Diário
     await RollTable.create({
       name: `${titulo}: ${extra.nome}`, folder: pastaT.id,
       formula: extra.formula,
@@ -573,16 +574,16 @@ async function importarPlayset(dados) {
     });
   }
 
-  ui.notifications.info(`Fiasco: playset "${titulo}" importado.`);
+  ui.notifications.info(`Fiasco: Cenário "${titulo}" importado.`);
   diario.sheet.render(true);
 }
 
 async function dialogoImportar() {
   const arquivo = await DialogV2.wait({
-    window: { title: "Fiasco: Importar Playset" },
+    window: { title: "Fiasco: Importar Cenário" },
     content: `
       <div class="fiasco-dialogo">
-        <p>Escolha o arquivo <b>.json</b> do playset. Ele cria um Diário com as tabelas e as Tabelas de Rolagem.</p>
+        <p>Escolha o arquivo <b>.json</b> do Cenário. Ele cria um Diário com as listas e as Tabelas de Rolagem.</p>
         <input type="file" name="arquivo" accept=".json,application/json">
       </div>`,
     buttons: [
@@ -638,7 +639,7 @@ function registrarHooksInterface() {
 
   Hooks.on("renderJournalDirectory", (app, html) => {
     if (!game.user.isGM || !ativo("importador")) return;
-    inserirBotoes(html, `${MOD}-diarios`, [{ rotulo: "Importar Playset", icone: "fas fa-file-import", acao: dialogoImportar }]);
+    inserirBotoes(html, `${MOD}-diarios`, [{ rotulo: "Importar Cenário", icone: "fas fa-file-import", acao: dialogoImportar }]);
   });
 
   if (ativo("hudDado")) {

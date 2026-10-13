@@ -9,7 +9,7 @@
 
   <nav class="fiasco-abas">
     <button type="button" data-action="aba" data-aba="relacoes" class="{{#if aba.relacoes}}ativa{{/if}}"><i class="fas fa-people-arrows"></i> Relações</button>
-    <button type="button" data-action="aba" data-aba="elementos" class="{{#if aba.elementos}}ativa{{/if}}"><i class="fas fa-briefcase"></i> Elementos</button>
+    <button type="button" data-action="aba" data-aba="elementos" class="{{#if aba.elementos}}ativa{{/if}}"><i class="fas fa-briefcase"></i> Detalhes</button>
     <button type="button" data-action="aba" data-aba="notas" class="{{#if aba.notas}}ativa{{/if}}"><i class="fas fa-pen"></i> Anotações</button>
   </nav>
 
@@ -42,7 +42,7 @@
           <select name="system.esquerda.vizinho">{{selectOptions vizinhos selected=system.esquerda.vizinho}}</select>
         </label>
         <label>Relação <input type="text" name="system.esquerda.relacao" value="{{system.esquerda.relacao}}" placeholder="Ex.: Trabalho — Lobista"></label>
-        <label>Detalhe <input type="text" name="system.esquerda.detalhe" value="{{system.esquerda.detalhe}}" placeholder="Necessidade, objeto ou local"></label>
+        <label>Detalhe <input type="text" name="system.esquerda.detalhe" value="{{system.esquerda.detalhe}}" placeholder="Necessidade, Objeto ou Locação"></label>
       </div>
 
       <div class="fiasco-bloco fiasco-postit">
@@ -51,17 +51,17 @@
           <select name="system.direita.vizinho">{{selectOptions vizinhos selected=system.direita.vizinho}}</select>
         </label>
         <label>Relação <input type="text" name="system.direita.relacao" value="{{system.direita.relacao}}" placeholder="Ex.: Romance — Ex-Mulher"></label>
-        <label>Detalhe <input type="text" name="system.direita.detalhe" value="{{system.direita.detalhe}}" placeholder="Necessidade, objeto ou local"></label>
+        <label>Detalhe <input type="text" name="system.direita.detalhe" value="{{system.direita.detalhe}}" placeholder="Necessidade, Objeto ou Locação"></label>
       </div>
     </div>
   </section>
 
-  <!-- ABA: ELEMENTOS -->
+  <!-- ABA: DETALHES (Necessidade, Objeto, Locação) -->
   <section class="fiasco-aba {{#if aba.elementos}}ativa{{/if}}" data-aba="elementos">
     <div class="fiasco-bloco">
       <label>Necessidade <input type="text" name="system.necessidade" value="{{system.necessidade}}" placeholder="Ex.: De entrar no esquema — por não ter opção"></label>
       <label>Objeto <input type="text" name="system.objeto" value="{{system.objeto}}" placeholder="Ex.: Mala de dólares"></label>
-      <label>Local <input type="text" name="system.local" value="{{system.local}}" placeholder="Ex.: Cafezinho da Câmara"></label>
+      <label>Locação <input type="text" name="system.local" value="{{system.local}}" placeholder="Ex.: Cafezinho da Câmara"></label>
     </div>
 
     <div class="fiasco-bloco">
