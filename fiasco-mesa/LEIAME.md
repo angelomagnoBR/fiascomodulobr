@@ -16,6 +16,7 @@ Módulo para jogar Fiasco Classic no Foundry VTT (v12 e v13), em qualquer sistem
 | Mapa de Relações | Botão **Mapa** na aba Atores ou dentro da ficha |
 | Botão de rolar no token | Clique direito no dado → ícone de dado |
 | Importar Cenário | Botão no topo da aba **Diários** (só GM) |
+| Escrever na mesa | Botão de **caneta** nos controles de Token, ou **Alt+T** |
 
 ## Ligar e desligar partes
 *Configurações → Configurar Módulos → Fiasco: Mesa.* Cada parte tem uma caixa própria. Se desligar uma ficha, ela vira a **ficha simples**, sem quebrar nada. Algumas opções recarregam a página.
@@ -27,8 +28,22 @@ Módulo para jogar Fiasco Classic no Foundry VTT (v12 e v13), em qualquer sistem
 4. Para rolar: selecione os dados (arraste uma caixa em volta) → clique direito → ícone de dado. Ou o GM usa **Rolar todos**.
 5. Clique em **Novo jogador** (aba Atores) para cada pessoa e preencha os vizinhos. O mapa monta sozinho.
 
+## Escrever na mesa
+1. Clique na **caneta** (controles de Token, na barra da esquerda) ou aperte **Alt+T**.
+2. Clique na mesa onde quer escrever. Abre uma janela com o texto, a **fonte**, a **cor** e o **tamanho**, com prévia ao vivo.
+3. Clique em **Escrever**. O texto aparece para todos e fica salvo na cena.
+
+Para **editar ou apagar**, ligue a caneta de novo e clique em cima do texto. Cada jogador edita os próprios textos; o GM edita todos. **Esc** cancela.
+
+O módulo traz cinco fontes: Máquina de escrever (Special Elite), Caneta pincel (Permanent Marker), Letra de mão (Caveat), Cartaz (Alfa Slab One) e Faroeste (Rye). As fontes do Foundry e as que você adicionou também aparecem na lista. A janela lembra a última fonte, cor e tamanho que você usou.
+
+Jogadores sem permissão de desenhar também podem escrever: o texto é criado pelo GM em nome deles, então **um GM precisa estar conectado**. Os textos são Desenhos comuns do Foundry, então o GM também pode movê-los pela camada de Desenhos.
+
 ## Dice So Nice
 Brancos e pretos rolam com cores próprias e a face do token muda depois da animação. Para mudar as cores 3D, edite `APARENCIA_DSN` no topo de `scripts/fiasco.js`.
+
+## Licenças das fontes
+As fontes em `assets/fontes` são livres: Special Elite e Permanent Marker sob Apache 2.0; Caveat, Alfa Slab One e Rye sob SIL Open Font License 1.1. Os textos das licenças estão na mesma pasta.
 
 ## Macros (opcional)
 Crie uma macro do tipo **Script** com uma destas linhas:
@@ -38,6 +53,7 @@ FiascoMesa.rolarSelecionados();   // rola os dados selecionados
 FiascoMesa.rolarTodos();          // rola todos os dados da cena
 FiascoMesa.dialogoCriarDados();   // abre a janela de criar dados
 FiascoMesa.abrirMapa();           // abre o mapa de relações
+FiascoMesa.alternarEscrita();     // liga/desliga o modo de escrever na mesa
 ```
 
 ## Trocar as imagens dos dados

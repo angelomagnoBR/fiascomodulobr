@@ -1,6 +1,7 @@
 /**
  * Fiasco: Mesa — módulo para Foundry VTT (v12/v13)
  * Ficha de jogador, ficha de dado, pool de dados com Dice So Nice e importador de Cenários.
+ * Também permite escrever na mesa com fonte e cor à escolha, visível para todos.
  * Cada parte pode ser ligada/desligada em Configurações > Configurar Módulos > Fiasco: Mesa.
  */
 
@@ -30,6 +31,7 @@ const OPCOES = {
   criarDados:   { name: "Botões de dados", hint: "Mostra os botões 'Criar dados' e 'Rolar todos' na aba de Atores (só GM).", type: Boolean, default: true, reload: true },
   hudDado:      { name: "Botão de rolar no token", hint: "Adiciona um botão de rolar no HUD do token de dado (rola todos os dados selecionados).", type: Boolean, default: true, reload: true },
   mapa:         { name: "Mapa de Relações", hint: "Habilita a janela com o mapa de relações de todos os jogadores.", type: Boolean, default: true, reload: true },
+  escrever:     { name: "Escrever na mesa", hint: "Botão de caneta nos controles de Token (e Alt+T): escreva na mesa, com fonte e cor à escolha, e todos veem.", type: Boolean, default: true, reload: true },
   importador:   { name: "Importador de Cenário", hint: "Mostra o botão 'Importar Cenário' na aba de Diários (só GM).", type: Boolean, default: true, reload: true },
   diceSoNice:   { name: "Usar Dice So Nice", hint: "Anima a rolagem em 3D com dados brancos e pretos (precisa do módulo Dice So Nice).", type: Boolean, default: true, reload: false },
   mensagemChat: { name: "Mensagem no chat", hint: "Mostra no chat o resultado de cada rolagem de dados.", type: Boolean, default: true, reload: false },
@@ -45,6 +47,7 @@ function registrarConfiguracoes() {
       ...(o.onChange ? { onChange: o.onChange } : {})
     });
   }
+  game.settings.register(MOD, "ultimaEscrita", { scope: "client", config: false, type: Object, default: { ...PADRAO_ESCRITA } });
 }
 
 function ativo(key) {
@@ -602,6 +605,256 @@ async function dialogoImportar() {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Escrever na mesa                                                   */
+/* ------------------------------------------------------------------ */
+
+/* Fontes que vêm com o módulo (licenças em assets/fontes). */
+const FONTES_MESA = {
+  "Special Elite":    { arquivo: "special-elite",    rotulo: "Máquina de escrever" },
+  "Permanent Marker": { arquivo: "permanent-marker", rotulo: "Caneta pincel" },
+  "Caveat":           { arquivo: "caveat",           rotulo: "Letra de mão" },
+  "Alfa Slab One":    { arquivo: "alfa-slab-one",    rotulo: "Cartaz" },
+  "Rye":              { arquivo: "rye",              rotulo: "Faroeste" }
+};
+
+const CORES_MESA = [
+  { cor: "#efe5cf", nome: "Creme" },
+  { cor: "#ffffff", nome: "Branco" },
+  { cor: "#1b1b1b", nome: "Preto" },
+  { cor: "#d0342c", nome: "Vermelho" },
+  { cor: "#e8a92e", nome: "Mostarda" },
+  { cor: "#8fc1e3", nome: "Azul" }
+];
+
+const SOCKET = `module.${MOD}`;
+const PADRAO_ESCRITA = { fonte: "Special Elite", cor: "#efe5cf", tamanho: 48 };
+
+function registrarFontes() {
+  CONFIG.fontDefinitions ??= {};
+  for (const [familia, f] of Object.entries(FONTES_MESA)) {
+    if (CONFIG.fontDefinitions[familia]) continue;
+    CONFIG.fontDefinitions[familia] = { editor: true, fonts: [{ urls: [`modules/${MOD}/assets/fontes/${f.arquivo}.woff2`] }] };
+  }
+}
+
+/** Garante a fonte carregada no navegador (para medir e para a prévia). */
+async function carregarFonte(familia, tamanho = 32) {
+  try { await document.fonts.load(`${tamanho}px "${familia}"`); } catch { /* segue com a fonte reserva */ }
+}
+
+const ehTexto = (d) => !!d?.getFlag?.(MOD, "texto");
+const autorId = (d) => d?.author?.id ?? d?._source?.author ?? d?.author;
+const gmAtivo = () => game.users.activeGM ?? game.users.find((u) => u.isGM && u.active);
+const podeDesenhar = () => game.user.isGM || game.user.can("DRAWING_CREATE");
+
+function ultimaEscrita() {
+  try { return { ...PADRAO_ESCRITA, ...game.settings.get(MOD, "ultimaEscrita") }; } catch { return { ...PADRAO_ESCRITA }; }
+}
+
+/** Calcula o tamanho da caixa para o texto não quebrar linha. */
+function medirTexto(texto, fonte, tamanho) {
+  const style = new PIXI.TextStyle({ fontFamily: fonte, fontSize: tamanho });
+  const m = PIXI.TextMetrics.measureText(texto, style);
+  return { w: Math.ceil(m.width + tamanho * 0.8), h: Math.ceil(m.height + tamanho * 0.5) };
+}
+
+/** Monta os dados do Desenho de texto, centrado no ponto (cx, cy). */
+function dadosDesenho({ texto, fonte, cor, tamanho }, cx, cy) {
+  const { w, h } = medirTexto(texto, fonte, tamanho);
+  return {
+    x: Math.round(cx - w / 2), y: Math.round(cy - h / 2),
+    shape: { type: "r", width: w, height: h },
+    text: texto, fontFamily: fonte, fontSize: tamanho, textColor: cor, textAlpha: 1,
+    fillType: CONST.DRAWING_FILL_TYPES.NONE, strokeWidth: 0, strokeAlpha: 0
+  };
+}
+
+/* Quem não tem permissão de desenhar pede ao GM conectado, que cria o texto em nome dele. */
+function pedirAoGM(acao, dados) {
+  if (!gmAtivo()) return ui.notifications.warn("Fiasco: é preciso um GM conectado para escrever na mesa.");
+  game.socket.emit(SOCKET, { acao, dados, usuario: game.user.id, cena: canvas.scene.id });
+}
+
+const CAMPOS_TEXTO = ["x", "y", "shape", "text", "fontFamily", "fontSize", "textColor", "textAlpha", "fillType", "strokeWidth", "strokeAlpha"];
+const filtrar = (d) => Object.fromEntries(CAMPOS_TEXTO.filter((k) => k in d).map((k) => [k, d[k]]));
+
+function registrarSocket() {
+  game.socket.on(SOCKET, async (msg) => {
+    if (!game.user.isGM || gmAtivo()?.id !== game.user.id) return;
+    const scene = game.scenes.get(msg.cena);
+    if (!scene || !game.users.get(msg.usuario)) return;
+    if (msg.acao === "criarTexto") {
+      await scene.createEmbeddedDocuments("Drawing", [{ ...filtrar(msg.dados), author: msg.usuario, flags: { [MOD]: { texto: true } } }]);
+      return;
+    }
+    const doc = scene.drawings.get(msg.dados?._id);
+    if (!ehTexto(doc) || autorId(doc) !== msg.usuario) return;
+    if (msg.acao === "editarTexto") await doc.update(filtrar(msg.dados));
+    if (msg.acao === "apagarTexto") await doc.delete();
+  });
+}
+
+async function criarTexto(dados) {
+  if (!podeDesenhar()) return pedirAoGM("criarTexto", dados);
+  await canvas.scene.createEmbeddedDocuments("Drawing", [{ ...dados, author: game.user.id, flags: { [MOD]: { texto: true } } }]);
+}
+
+async function editarTexto(doc, dados) {
+  if (podeDesenhar() && doc.isOwner) return doc.update(dados);
+  pedirAoGM("editarTexto", { ...dados, _id: doc.id });
+}
+
+async function apagarTexto(doc) {
+  if (podeDesenhar() && doc.isOwner) return doc.delete();
+  pedirAoGM("apagarTexto", { _id: doc.id });
+}
+
+/** Janela de escrever/editar, com prévia ao vivo. */
+async function dialogoTexto(existente) {
+  const base = existente
+    ? { texto: existente.text, fonte: existente.fontFamily, cor: existente.textColor?.css ?? String(existente.textColor), tamanho: existente.fontSize }
+    : { texto: "", ...ultimaEscrita() };
+
+  const nossas = Object.entries(FONTES_MESA)
+    .map(([f, o]) => `<option value="${f}" ${f === base.fonte ? "selected" : ""}>${o.rotulo} (${f})</option>`).join("");
+  const outras = Object.keys(CONFIG.fontDefinitions ?? {}).filter((f) => !FONTES_MESA[f]).sort()
+    .map((f) => `<option value="${esc(f)}" ${f === base.fonte ? "selected" : ""}>${esc(f)}</option>`).join("");
+  const amostras = CORES_MESA
+    .map((c) => `<button type="button" class="fiasco-amostra" data-cor="${c.cor}" title="${c.nome}" style="background:${c.cor}"></button>`).join("");
+
+  const content = `
+    <div class="fiasco-dialogo fiasco-escrita">
+      <textarea name="texto" rows="3" placeholder="Escreva aqui. Enter quebra a linha." autofocus>${esc(base.texto)}</textarea>
+      <label>Fonte
+        <select name="fonte"><optgroup label="Fiasco">${nossas}</optgroup>${outras ? `<optgroup label="Outras">${outras}</optgroup>` : ""}</select>
+      </label>
+      <div class="fiasco-linha">
+        <label>Cor <input type="color" name="cor" value="${base.cor}"></label>
+        <div class="fiasco-amostras">${amostras}</div>
+      </div>
+      <label>Tamanho <span class="fiasco-tam-valor">${base.tamanho}</span>
+        <input type="range" name="tamanho" min="12" max="200" step="2" value="${base.tamanho}">
+      </label>
+      <div class="fiasco-previa"><span></span></div>
+    </div>`;
+
+  const ler = (form) => ({
+    texto: form.elements.texto.value.replace(/\s+$/, ""),
+    fonte: form.elements.fonte.value,
+    cor: form.elements.cor.value,
+    tamanho: Number(form.elements.tamanho.value) || 48
+  });
+
+  const buttons = [{ action: "ok", label: existente ? "Salvar" : "Escrever", icon: "fas fa-pen-nib", default: true, callback: (ev, btn) => ler(btn.form) }];
+  if (existente) buttons.push({ action: "apagar", label: "Apagar", icon: "fas fa-trash" });
+  buttons.push({ action: "cancelar", label: "Cancelar" });
+
+  for (const f of Object.keys(FONTES_MESA)) carregarFonte(f);
+
+  return DialogV2.wait({
+    window: { title: existente ? "Fiasco: Editar texto" : "Fiasco: Escrever na mesa" },
+    position: { width: 420 },
+    content,
+    buttons,
+    rejectClose: false,
+    render: (event, arg) => {
+      const root = arg instanceof HTMLElement ? arg : arg?.element;
+      const form = root?.querySelector("form") ?? root;
+      if (!form?.elements?.texto) return;
+      const previa = root.querySelector(".fiasco-previa span");
+      const tamValor = root.querySelector(".fiasco-tam-valor");
+      const atualizar = () => {
+        const v = ler(form);
+        previa.textContent = v.texto || "Seu texto aqui";
+        previa.style.fontFamily = `"${v.fonte}", sans-serif`;
+        previa.style.color = v.cor;
+        previa.style.fontSize = `${Math.min(v.tamanho, 64)}px`;
+        tamValor.textContent = v.tamanho;
+      };
+      form.addEventListener("input", atualizar);
+      form.elements.fonte.addEventListener("change", async () => { await carregarFonte(form.elements.fonte.value); atualizar(); });
+      root.querySelectorAll(".fiasco-amostra").forEach((b) => b.addEventListener("click", () => { form.elements.cor.value = b.dataset.cor; atualizar(); }));
+      carregarFonte(base.fonte).then(atualizar);
+      atualizar();
+    }
+  });
+}
+
+/** Abre a janela no ponto clicado: edita o texto que está ali (se for seu) ou cria um novo. */
+async function escreverEm(ponto) {
+  const alvo = canvas.scene.drawings.contents.filter((d) => ehTexto(d)
+    && (game.user.isGM || autorId(d) === game.user.id)
+    && ponto.x >= d.x && ponto.x <= d.x + d.shape.width && ponto.y >= d.y && ponto.y <= d.y + d.shape.height).pop();
+
+  const res = await dialogoTexto(alvo);
+  if (res === "apagar" && alvo) return apagarTexto(alvo);
+  if (!res || typeof res !== "object") return;
+  if (!res.texto.trim()) return ui.notifications.warn("Fiasco: o texto está vazio.");
+
+  await game.settings.set(MOD, "ultimaEscrita", { fonte: res.fonte, cor: res.cor, tamanho: res.tamanho });
+  await carregarFonte(res.fonte, res.tamanho);
+
+  if (alvo) {
+    const cx = alvo.x + alvo.shape.width / 2, cy = alvo.y + alvo.shape.height / 2;
+    return editarTexto(alvo, dadosDesenho(res, cx, cy));
+  }
+  return criarTexto(dadosDesenho(res, ponto.x, ponto.y));
+}
+
+/* Modo escrita: o próximo clique na mesa abre a janela. Esc cancela. */
+let modoEscrita = false;
+let avisoEscrita = null;
+
+function alternarEscrita(ligar = !modoEscrita) {
+  if (ligar && !canvas.ready) return ui.notifications.warn("Fiasco: abra uma cena antes.");
+  modoEscrita = ligar;
+  document.body.classList.toggle("fiasco-escrevendo", ligar);
+  avisoEscrita?.remove();
+  avisoEscrita = null;
+  if (ligar) {
+    avisoEscrita = document.createElement("div");
+    avisoEscrita.className = "fiasco-aviso-escrita";
+    avisoEscrita.innerHTML = `<i class="fas fa-pen-nib"></i> Clique na mesa onde quer escrever, ou num texto seu para editar. <b>Esc</b> cancela.`;
+    document.body.append(avisoEscrita);
+  }
+}
+
+function registrarModoEscrita() {
+  document.addEventListener("pointerdown", (ev) => {
+    if (!modoEscrita || ev.button !== 0 || !canvas.ready || ev.target !== canvas.app.view) return;
+    ev.preventDefault();
+    ev.stopImmediatePropagation();
+    const ponto = canvas.canvasCoordinatesFromClient({ x: ev.clientX, y: ev.clientY });
+    alternarEscrita(false);
+    escreverEm(ponto);
+  }, true);
+
+  document.addEventListener("keydown", (ev) => {
+    if (modoEscrita && ev.key === "Escape") alternarEscrita(false);
+  }, true);
+
+  Hooks.on("canvasTearDown", () => { if (modoEscrita) alternarEscrita(false); });
+
+  // Botão na barra de controles de Tokens (v12: lista; v13: objeto)
+  Hooks.on("getSceneControlButtons", (controls) => {
+    const tool = { name: "fiascoEscrever", title: "Escrever na mesa (Alt+T)", icon: "fas fa-pen-nib", button: true };
+    if (Array.isArray(controls)) {
+      controls.find((c) => c.name === "token")?.tools.push({ ...tool, onClick: () => alternarEscrita() });
+    } else {
+      const grupo = controls.tokens ?? controls.token;
+      if (grupo?.tools) grupo.tools.fiascoEscrever = { ...tool, order: Object.keys(grupo.tools).length + 1, onChange: () => alternarEscrita() };
+    }
+  });
+
+  game.keybindings.register(MOD, "escrever", {
+    name: "Escrever na mesa",
+    hint: "Liga o modo de escrita: o próximo clique na mesa abre a janela de texto.",
+    editable: [{ key: "KeyT", modifiers: ["Alt"] }],
+    onDown: () => { alternarEscrita(); return true; }
+  });
+}
+
+/* ------------------------------------------------------------------ */
 /*  Botões na interface                                                */
 /* ------------------------------------------------------------------ */
 
@@ -683,10 +936,17 @@ Hooks.once("init", () => {
   CONFIG.Actor.dataModels[TIPO_DADO] = DadoData;
   registrarFichas();
   registrarHooksInterface();
+  registrarFontes();
+  if (ativo("escrever")) registrarModoEscrita();
 
-  const api = { redimensionarDados, criarJogador, dialogoCriarJogador, criarDados, dialogoCriarDados, rolarSelecionados, rolarTodos, rolarTokens, abrirMapa, importarPlayset, dialogoImportar, definirFace };
+  const api = { alternarEscrita, escreverEm, redimensionarDados, criarJogador, dialogoCriarJogador, criarDados, dialogoCriarDados, rolarSelecionados, rolarTodos, rolarTokens, abrirMapa, importarPlayset, dialogoImportar, definirFace };
   game.modules.get(MOD).api = api;
   globalThis.FiascoMesa = api;
+});
+
+Hooks.once("ready", () => {
+  if (ativo("escrever")) registrarSocket();
+  for (const f of Object.keys(FONTES_MESA)) carregarFonte(f);
 });
 
 /* Ao abrir o mundo, o GM ajusta dados com tamanho diferente do configurado. */

@@ -131,3 +131,32 @@
 .fiasco-pip.preto { background: #161616; color: #f4ecdb; }
 
 .fiasco-hud-rolar { color: #f4ecdb; }
+
+/* Escrever na mesa */
+body.fiasco-escrevendo #board { cursor: crosshair !important; }
+.fiasco-aviso-escrita {
+  position: fixed; top: 12px; left: 50%; transform: translateX(-50%); z-index: 100;
+  background: rgba(20, 17, 14, .92); color: #efe5cf; border: 1px solid #e8a92e; border-radius: 6px;
+  padding: 8px 14px; font-size: 14px; pointer-events: none; box-shadow: 0 4px 14px rgba(0, 0, 0, .5);
+}
+.fiasco-aviso-escrita i { color: #e8a92e; margin-right: 6px; }
+.fiasco-escrita { display: flex; flex-direction: column; gap: 10px; }
+.fiasco-escrita textarea { width: 100%; resize: vertical; font-size: 14px; }
+.fiasco-escrita label { display: flex; flex-direction: column; gap: 4px; }
+.fiasco-escrita .fiasco-linha { display: flex; align-items: flex-end; gap: 12px; }
+.fiasco-escrita .fiasco-linha label { flex: 0 0 auto; }
+.fiasco-escrita input[type="color"] { width: 52px; height: 30px; padding: 0 2px; cursor: pointer; }
+.fiasco-amostras { display: flex; gap: 6px; padding-bottom: 3px; }
+.fiasco-amostra {
+  width: 24px; height: 24px; min-width: 0; padding: 0; border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, .45); cursor: pointer; flex: 0 0 auto;
+}
+.fiasco-amostra:hover { transform: scale(1.12); }
+.fiasco-tam-valor { font-weight: 700; }
+.fiasco-previa {
+  min-height: 90px; max-height: 220px; overflow: auto; border-radius: 6px; padding: 12px;
+  display: flex; align-items: center; justify-content: center; text-align: center;
+  background: radial-gradient(ellipse at center, #2f5a3a 0%, #1d3a25 70%, #12241a 100%);
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, .6);
+}
+.fiasco-previa span { white-space: pre-wrap; line-height: 1.15; text-shadow: 0 1px 2px rgba(0, 0, 0, .55); }
