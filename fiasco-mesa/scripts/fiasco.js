@@ -227,6 +227,41 @@ async function criarDados({ jogadores = 4, limpar = true } = {}) {
   ui.notifications.info(`Fiasco: ${porCor} brancos e ${porCor} pretos no centro da mesa.`);
 }
 
+/**
+ * Cria um ator do tipo Fiasco: Jogador direto pelo código.
+ * Necessário porque o Simple Worldbuilding troca a janela "Criar Ator"
+ * por uma que só lista templates dele, escondendo os tipos do módulo.
+ */
+async function criarJogador(nome = "Novo jogador") {
+  if (!game.user.isGM && !game.user.can("ACTOR_CREATE")) {
+    return ui.notifications.warn("Fiasco: você não tem permissão para criar atores.");
+  }
+  const actor = await Actor.create({
+    name: nome || "Novo jogador",
+    type: TIPO_JOGADOR,
+    img: "icons/svg/mystery-man.svg",
+    ownership: { default: CONST.DOCUMENT_OWNERSHIP_LEVELS.OBSERVER }
+  });
+  actor?.sheet.render(true);
+  return actor;
+}
+
+async function dialogoCriarJogador() {
+  const nome = await DialogV2.wait({
+    window: { title: "Fiasco: Novo jogador" },
+    content: `
+      <div class="fiasco-dialogo">
+        <label>Nome do personagem <input type="text" name="nome" placeholder="Ex.: Adamastor Moreira" autofocus></label>
+      </div>`,
+    buttons: [
+      { action: "ok", label: "Criar", default: true, callback: (ev, btn) => btn.form.elements.nome.value.trim() || "Novo jogador" },
+      { action: "cancelar", label: "Cancelar" }
+    ],
+    rejectClose: false
+  });
+  if (typeof nome === "string" && nome !== "cancelar") return criarJogador(nome);
+}
+
 async function dialogoCriarDados() {
   const res = await DialogV2.wait({
     window: { title: "Fiasco: Criar dados" },
@@ -555,6 +590,7 @@ function inserirBotoes(html, id, botoes) {
 function registrarHooksInterface() {
   Hooks.on("renderActorDirectory", (app, html) => {
     const botoes = [];
+    if (game.user.isGM) botoes.push({ rotulo: "Novo jogador", icone: "fas fa-user-plus", acao: dialogoCriarJogador });
     if (game.user.isGM && ativo("criarDados")) {
       botoes.push({ rotulo: "Criar dados", icone: "fas fa-dice", acao: dialogoCriarDados });
       botoes.push({ rotulo: "Rolar todos", icone: "fas fa-dice-six", acao: rolarTodos });
@@ -610,7 +646,7 @@ Hooks.once("init", () => {
   registrarFichas();
   registrarHooksInterface();
 
-  const api = { criarDados, dialogoCriarDados, rolarSelecionados, rolarTodos, rolarTokens, abrirMapa, importarPlayset, dialogoImportar, definirFace };
+  const api = { criarJogador, dialogoCriarJogador, criarDados, dialogoCriarDados, rolarSelecionados, rolarTodos, rolarTokens, abrirMapa, importarPlayset, dialogoImportar, definirFace };
   game.modules.get(MOD).api = api;
   globalThis.FiascoMesa = api;
 });

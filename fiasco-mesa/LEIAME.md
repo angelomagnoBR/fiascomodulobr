@@ -10,7 +10,7 @@ Módulo para jogar Fiasco Classic no Foundry VTT (v12 e v13), em qualquer sistem
 
 | Parte | Onde aparece |
 |---|---|
-| Ficha de Jogador | Crie um ator do tipo **Fiasco: Jogador** |
+| Ficha de Jogador | Botão **Novo jogador** no topo da aba Atores (o "Criar Ator" do Simple Worldbuilding não mostra esse tipo) |
 | Ficha de Dado | Abre ao clicar num dado da mesa |
 | Criar dados / Rolar todos | Botões no topo da aba **Atores** (só GM) |
 | Mapa de Relações | Botão **Mapa** na aba Atores ou dentro da ficha |
@@ -25,7 +25,7 @@ Módulo para jogar Fiasco Classic no Foundry VTT (v12 e v13), em qualquer sistem
 2. Na aba Atores, clique em **Criar dados** e diga quantos jogadores. Saem 4 dados por jogador, metade branco e metade preto, espalhados no centro da cena.
 3. Os dados ficam com permissão **Dono** para todos: qualquer jogador arrasta qualquer dado para a sua área.
 4. Para rolar: selecione os dados (arraste uma caixa em volta) → clique direito → ícone de dado. Ou o GM usa **Rolar todos**.
-5. Crie um ator **Fiasco: Jogador** para cada pessoa e preencha os vizinhos. O mapa monta sozinho.
+5. Clique em **Novo jogador** (aba Atores) para cada pessoa e preencha os vizinhos. O mapa monta sozinho.
 
 ## Dice So Nice
 Brancos e pretos rolam com cores próprias e a face do token muda depois da animação. Para mudar as cores 3D, edite `APARENCIA_DSN` no topo de `scripts/fiasco.js`.
