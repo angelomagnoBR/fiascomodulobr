@@ -33,7 +33,7 @@ const OPCOES = {
   importador:   { name: "Importador de Playset", hint: "Mostra o botão 'Importar Playset' na aba de Diários (só GM).", type: Boolean, default: true, reload: true },
   diceSoNice:   { name: "Usar Dice So Nice", hint: "Anima a rolagem em 3D com dados brancos e pretos (precisa do módulo Dice So Nice).", type: Boolean, default: true, reload: false },
   mensagemChat: { name: "Mensagem no chat", hint: "Mostra no chat o resultado de cada rolagem de dados.", type: Boolean, default: true, reload: false },
-  tamanhoDado:  { name: "Tamanho do token de dado", hint: "Em quadrados da grade (ex.: 0.5 = meio quadrado).", type: Number, default: 0.5, reload: false },
+  tamanhoDado:  { name: "Tamanho do token de dado", hint: "Em quadrados da grade (ex.: 1 = um quadrado, 1.5 = um quadrado e meio). Muda na hora os dados que já estão na mesa.", type: Number, default: 1, reload: false, onChange: () => redimensionarDados() },
   facesCaminho: { name: "Imagens das faces", hint: "Caminho das faces. Use {cor} (branco/preto) e {valor} (1-6).", type: String, default: `modules/${MOD}/assets/dados/{cor}-{valor}.svg`, reload: false }
 };
 
@@ -41,7 +41,8 @@ function registrarConfiguracoes() {
   for (const [key, o] of Object.entries(OPCOES)) {
     game.settings.register(MOD, key, {
       name: o.name, hint: o.hint, scope: "world", config: true,
-      type: o.type, default: o.default, requiresReload: o.reload
+      type: o.type, default: o.default, requiresReload: o.reload,
+      ...(o.onChange ? { onChange: o.onChange } : {})
     });
   }
 }
@@ -159,11 +160,33 @@ function rolarTodos() {
   return rolarTokens(canvas.scene?.tokens.filter((t) => ehDado(t)) ?? []);
 }
 
+function tamanhoDado() {
+  return Math.max(0.25, Number(ativo("tamanhoDado")) || 1);
+}
+
+/** Aplica o tamanho escolhido aos atores base e aos dados de todas as cenas (só o GM executa). */
+async function redimensionarDados() {
+  if (!game.user.isGM) return;
+  const t = tamanhoDado();
+  for (const a of game.actors.filter((x) => x.type === TIPO_DADO)) {
+    await a.update({ "prototypeToken.width": t, "prototypeToken.height": t });
+  }
+  for (const scene of game.scenes) {
+    const upd = scene.tokens.filter((tk) => ehDado(tk)).map((tk) => {
+      const grid = scene.grid.size;
+      const dx = ((tk.width - t) * grid) / 2;
+      return { _id: tk.id, width: t, height: t, x: Math.round(tk.x + dx), y: Math.round(tk.y + dx) };
+    });
+    if (upd.length) await scene.updateEmbeddedDocuments("Token", upd);
+  }
+  ui.notifications.info(`Fiasco: dados redimensionados para ${t}.`);
+}
+
 /** Pega (ou cria) o ator base de uma cor. */
 async function atorBase(cor) {
   const existente = game.actors.find((a) => a.type === TIPO_DADO && a.getFlag(MOD, "base") === cor);
   if (existente) return existente;
-  const t = Number(ativo("tamanhoDado")) || 0.5;
+  const t = tamanhoDado();
   const src = face(cor, 1);
   return Actor.create({
     name: cor === "branco" ? "Dado Branco" : "Dado Preto",
@@ -211,13 +234,14 @@ async function criarDados({ jogadores = 4, limpar = true } = {}) {
       const valor = Math.ceil(Math.random() * 6);
       const ang = Math.random() * Math.PI * 2;
       const dist = Math.sqrt(Math.random()) * raio;
-      const tam = (base.prototypeToken.width ?? 0.5) * grid;
+      const tam = tamanhoDado() * grid;
       const doc = await base.getTokenDocument({
         x: Math.round(cx + Math.cos(ang) * dist - tam / 2),
         y: Math.round(cy + Math.sin(ang) * dist - tam / 2),
         rotation: Math.floor(Math.random() * 360)
       });
       const obj = doc.toObject();
+      obj.width = obj.height = tamanhoDado();
       obj.texture.src = face(cor, valor);
       obj.delta = { system: { valor }, img: face(cor, valor) };
       novos.push(obj);
@@ -646,7 +670,16 @@ Hooks.once("init", () => {
   registrarFichas();
   registrarHooksInterface();
 
-  const api = { criarJogador, dialogoCriarJogador, criarDados, dialogoCriarDados, rolarSelecionados, rolarTodos, rolarTokens, abrirMapa, importarPlayset, dialogoImportar, definirFace };
+  const api = { redimensionarDados, criarJogador, dialogoCriarJogador, criarDados, dialogoCriarDados, rolarSelecionados, rolarTodos, rolarTokens, abrirMapa, importarPlayset, dialogoImportar, definirFace };
   game.modules.get(MOD).api = api;
   globalThis.FiascoMesa = api;
+});
+
+/* Ao abrir o mundo, o GM ajusta dados com tamanho diferente do configurado. */
+Hooks.once("ready", () => {
+  if (!game.user.isGM) return;
+  const t = tamanhoDado();
+  const fora = game.scenes.some((s) => s.tokens.some((tk) => ehDado(tk) && tk.width !== t))
+    || game.actors.some((a) => a.type === TIPO_DADO && a.prototypeToken.width !== t);
+  if (fora) redimensionarDados();
 });
