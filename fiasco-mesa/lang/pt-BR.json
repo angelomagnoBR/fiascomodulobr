@@ -1,0 +1,10 @@
+{
+  "TYPES": {
+    "Actor": {
+      "fiasco-mesa": {
+        "jogador": "Fiasco: Jogador",
+        "dado": "Fiasco: Dado"
+      }
+    }
+  }
+}

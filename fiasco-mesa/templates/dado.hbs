@@ -1,0 +1,21 @@
+<section class="fiasco-ficha fiasco-dado {{#if ehBranco}}branco{{else}}preto{{/if}}">
+  <input class="fiasco-nome" type="text" name="name" value="{{actor.name}}">
+  <div class="fiasco-dado-face">
+    <img src="{{imagem}}" alt="Face {{system.valor}}">
+  </div>
+  <button type="button" class="fiasco-btn-rolar" data-action="rolar"><i class="fas fa-dice"></i> Rolar</button>
+
+  <h3>Virar para</h3>
+  <div class="fiasco-faces">
+    {{#each faces}}
+    <button type="button" class="{{#if ativo}}ativo{{/if}}" data-action="valor" data-valor="{{v}}" title="{{v}}"><img src="{{src}}" alt="{{v}}"></button>
+    {{/each}}
+  </div>
+
+  <h3>Cor</h3>
+  <div class="fiasco-cores">
+    <button type="button" class="{{#if ehBranco}}ativo{{/if}}" data-action="cor" data-cor="branco">Branco</button>
+    <button type="button" class="{{#unless ehBranco}}ativo{{/unless}}" data-action="cor" data-cor="preto">Preto</button>
+  </div>
+  {{#unless ehToken}}<p class="hint">Este é o ator base. Os dados na mesa são tokens dele.</p>{{/unless}}
+</section>

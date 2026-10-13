@@ -1,0 +1,26 @@
+<section class="fiasco-mapa-corpo">
+  {{#if vazio}}
+  <p class="hint">Nenhum ator do tipo <b>Fiasco: Jogador</b> ainda. Crie um por jogador e preencha os vizinhos na ficha.</p>
+  {{else}}
+  <svg viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
+    {{#each arestas}}
+    <line x1="{{x1}}" y1="{{y1}}" x2="{{x2}}" y2="{{y2}}" class="linha"/>
+    {{/each}}
+    {{#each arestas}}
+    <g class="postit" transform="translate({{mx}} {{my}})">
+      <rect x="-82" y="-24" width="164" height="48" rx="4"/>
+      <text y="-4" class="rotulo">{{relacao}}</text>
+      <text y="14" class="detalhe">{{detalhe}}</text>
+    </g>
+    {{/each}}
+    {{#each nos}}
+    <g class="no" transform="translate({{x}} {{y}})" data-action="abrirFicha" data-id="{{id}}">
+      <rect x="-70" y="-30" width="140" height="60" rx="10"/>
+      <text y="-6" class="nome">{{nome}}</text>
+      <text y="13" class="conceito">{{conceito}}</text>
+    </g>
+    {{/each}}
+  </svg>
+  <p class="hint">Clique num personagem para abrir a ficha. O mapa se atualiza sozinho.</p>
+  {{/if}}
+</section>

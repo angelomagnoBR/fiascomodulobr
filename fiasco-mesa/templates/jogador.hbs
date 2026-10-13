@@ -1,0 +1,82 @@
+<section class="fiasco-ficha fiasco-jogador">
+  <header class="fiasco-topo">
+    <img class="fiasco-retrato" src="{{actor.img}}" alt="{{actor.name}}" data-action="trocarImagem" title="Trocar imagem">
+    <div class="fiasco-identidade">
+      <input class="fiasco-nome" type="text" name="name" value="{{actor.name}}" placeholder="Nome do personagem">
+      <input type="text" name="system.conceito" value="{{system.conceito}}" placeholder="Quem é? (ex.: assessor parlamentar endividado)">
+    </div>
+  </header>
+
+  <div class="fiasco-corpo">
+    <section class="fiasco-bloco">
+      <h3>Mapa de relações</h3>
+      <svg class="fiasco-mini-mapa" viewBox="0 0 560 170" xmlns="http://www.w3.org/2000/svg">
+        <line x1="95" y1="85" x2="280" y2="85" class="linha"/>
+        <line x1="280" y1="85" x2="465" y2="85" class="linha"/>
+        <text x="187" y="64" class="rotulo">{{system.esquerda.relacao}}</text>
+        <text x="187" y="112" class="detalhe">{{system.esquerda.detalhe}}</text>
+        <text x="373" y="64" class="rotulo">{{system.direita.relacao}}</text>
+        <text x="373" y="112" class="detalhe">{{system.direita.detalhe}}</text>
+        <rect x="15" y="62" width="160" height="46" rx="8" class="no vizinho"/>
+        <text x="95" y="90" class="nome">{{esqNome}}</text>
+        <rect x="200" y="58" width="160" height="54" rx="8" class="no eu"/>
+        <text x="280" y="90" class="nome">{{actor.name}}</text>
+        <rect x="385" y="62" width="160" height="46" rx="8" class="no vizinho"/>
+        <text x="465" y="90" class="nome">{{dirNome}}</text>
+      </svg>
+      {{#if mapaAtivo}}
+      <button type="button" class="fiasco-btn-mapa" data-action="abrirMapa"><i class="fas fa-diagram-project"></i> Mapa completo da mesa</button>
+      {{/if}}
+    </section>
+
+    <div class="fiasco-relacoes">
+      <section class="fiasco-bloco fiasco-postit">
+        <h3>← Vizinho à esquerda</h3>
+        <label>Jogador
+          <select name="system.esquerda.vizinho">{{selectOptions vizinhos selected=system.esquerda.vizinho}}</select>
+        </label>
+        <label>Relação <input type="text" name="system.esquerda.relacao" value="{{system.esquerda.relacao}}" placeholder="Ex.: Trabalho — Dono de Empreiteira / Lobista"></label>
+        <label>Detalhe <input type="text" name="system.esquerda.detalhe" value="{{system.esquerda.detalhe}}" placeholder="Necessidade, objeto ou local ligado"></label>
+      </section>
+
+      <section class="fiasco-bloco fiasco-postit">
+        <h3>Vizinho à direita →</h3>
+        <label>Jogador
+          <select name="system.direita.vizinho">{{selectOptions vizinhos selected=system.direita.vizinho}}</select>
+        </label>
+        <label>Relação <input type="text" name="system.direita.relacao" value="{{system.direita.relacao}}" placeholder="Ex.: Romance — Ex-Marido / Mulher"></label>
+        <label>Detalhe <input type="text" name="system.direita.detalhe" value="{{system.direita.detalhe}}" placeholder="Necessidade, objeto ou local ligado"></label>
+      </section>
+    </div>
+
+    <section class="fiasco-bloco">
+      <h3>Elementos</h3>
+      <label>Necessidade <input type="text" name="system.necessidade" value="{{system.necessidade}}" placeholder="Ex.: De entrar no esquema — por não ter opção"></label>
+      <label>Objeto <input type="text" name="system.objeto" value="{{system.objeto}}" placeholder="Ex.: Mala de dólares"></label>
+      <label>Local <input type="text" name="system.local" value="{{system.local}}" placeholder="Ex.: Cafezinho da Câmara"></label>
+    </section>
+
+    <section class="fiasco-bloco">
+      <h3>Dados recebidos</h3>
+      <div class="fiasco-contadores">
+        <div class="fiasco-contador branco">
+          <span>Brancos</span>
+          <button type="button" data-action="contador" data-campo="brancos" data-passo="-1">−</button>
+          <b>{{system.brancos}}</b>
+          <button type="button" data-action="contador" data-campo="brancos" data-passo="1">+</button>
+        </div>
+        <div class="fiasco-contador preto">
+          <span>Pretos</span>
+          <button type="button" data-action="contador" data-campo="pretos" data-passo="-1">−</button>
+          <b>{{system.pretos}}</b>
+          <button type="button" data-action="contador" data-campo="pretos" data-passo="1">+</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="fiasco-bloco">
+      <h3>Anotações</h3>
+      <textarea name="system.notas" rows="5" placeholder="Planos, segredos, o que deu errado...">{{system.notas}}</textarea>
+    </section>
+  </div>
+</section>

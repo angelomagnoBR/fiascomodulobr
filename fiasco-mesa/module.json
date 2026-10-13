@@ -1,0 +1,30 @@
+{
+  "id": "fiasco-mesa",
+  "title": "Fiasco: Mesa",
+  "description": "Mesa de Fiasco Classic para qualquer sistema: ficha de jogador com mapa de relações, ficha de dado (token arrastável, branco/preto), criação do pool de dados com Dice So Nice e importador de playsets (Journal + tabelas de rolagem). Cada parte pode ser ligada ou desligada nas configurações.",
+  "version": "0.1.0",
+  "compatibility": {
+    "minimum": "12",
+    "verified": "13"
+  },
+  "authors": [
+    { "name": "Angelo Magno" }
+  ],
+  "esmodules": ["scripts/fiasco.js"],
+  "styles": ["styles/fiasco.css"],
+  "languages": [
+    { "lang": "pt-BR", "name": "Português (Brasil)", "path": "lang/pt-BR.json" },
+    { "lang": "en", "name": "English", "path": "lang/pt-BR.json" }
+  ],
+  "documentTypes": {
+    "Actor": {
+      "jogador": {},
+      "dado": {}
+    }
+  },
+  "relationships": {
+    "recommends": [
+      { "id": "dice-so-nice", "type": "module", "reason": "Animação 3D dos dados brancos e pretos." }
+    ]
+  }
+}
