@@ -321,17 +321,21 @@ function nomeAtor(id) {
 class FichaJogador extends HandlebarsApplicationMixin(ActorSheetV2) {
   static DEFAULT_OPTIONS = {
     classes: ["fiasco-mesa", "ficha-jogador"],
-    position: { width: 620, height: 760 },
+    position: { width: 600, height: 620 },
     window: { resizable: true },
     form: { submitOnChange: true },
     actions: {
       trocarImagem: function () { return trocarImagem(this); },
       contador: FichaJogador.#contador,
+      aba: FichaJogador.#aba,
       abrirMapa: () => abrirMapa()
     }
   };
 
-  static PARTS = { main: { template: `modules/${MOD}/templates/jogador.hbs`, scrollable: [".fiasco-corpo"] } };
+  static PARTS = { main: { template: `modules/${MOD}/templates/jogador.hbs`, scrollable: [".fiasco-aba"] } };
+
+  /** Aba aberta; fica guardada enquanto a janela existir. */
+  _aba = "relacoes";
 
   async _prepareContext(options) {
     const ctx = await super._prepareContext(options);
@@ -344,8 +348,17 @@ class FichaJogador extends HandlebarsApplicationMixin(ActorSheetV2) {
       vizinhos,
       esqNome: nomeAtor(a.system.esquerda.vizinho) || "Vizinho à esquerda",
       dirNome: nomeAtor(a.system.direita.vizinho) || "Vizinho à direita",
-      mapaAtivo: ativo("mapa")
+      mapaAtivo: ativo("mapa"),
+      aba: { relacoes: this._aba === "relacoes", elementos: this._aba === "elementos", notas: this._aba === "notas" }
     });
+  }
+
+  /** Troca de aba sem redesenhar a ficha. */
+  static #aba(event, target) {
+    this._aba = target.dataset.aba;
+    const root = this.element;
+    root.querySelectorAll("[data-action='aba']").forEach((b) => b.classList.toggle("ativa", b.dataset.aba === this._aba));
+    root.querySelectorAll(".fiasco-aba").forEach((sec) => sec.classList.toggle("ativa", sec.dataset.aba === this._aba));
   }
 
   static async #contador(event, target) {

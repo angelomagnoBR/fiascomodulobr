@@ -7,56 +7,64 @@
     </div>
   </header>
 
-  <div class="fiasco-corpo">
-    <section class="fiasco-bloco">
-      <h3>Mapa de relações</h3>
-      <svg class="fiasco-mini-mapa" viewBox="0 0 560 170" xmlns="http://www.w3.org/2000/svg">
-        <line x1="95" y1="85" x2="280" y2="85" class="linha"/>
-        <line x1="280" y1="85" x2="465" y2="85" class="linha"/>
-        <text x="187" y="64" class="rotulo">{{system.esquerda.relacao}}</text>
-        <text x="187" y="112" class="detalhe">{{system.esquerda.detalhe}}</text>
-        <text x="373" y="64" class="rotulo">{{system.direita.relacao}}</text>
-        <text x="373" y="112" class="detalhe">{{system.direita.detalhe}}</text>
-        <rect x="15" y="62" width="160" height="46" rx="8" class="no vizinho"/>
-        <text x="95" y="90" class="nome">{{esqNome}}</text>
-        <rect x="200" y="58" width="160" height="54" rx="8" class="no eu"/>
-        <text x="280" y="90" class="nome">{{actor.name}}</text>
-        <rect x="385" y="62" width="160" height="46" rx="8" class="no vizinho"/>
-        <text x="465" y="90" class="nome">{{dirNome}}</text>
+  <nav class="fiasco-abas">
+    <button type="button" data-action="aba" data-aba="relacoes" class="{{#if aba.relacoes}}ativa{{/if}}"><i class="fas fa-people-arrows"></i> Relações</button>
+    <button type="button" data-action="aba" data-aba="elementos" class="{{#if aba.elementos}}ativa{{/if}}"><i class="fas fa-briefcase"></i> Elementos</button>
+    <button type="button" data-action="aba" data-aba="notas" class="{{#if aba.notas}}ativa{{/if}}"><i class="fas fa-pen"></i> Anotações</button>
+  </nav>
+
+  <!-- ABA: RELAÇÕES -->
+  <section class="fiasco-aba {{#if aba.relacoes}}ativa{{/if}}" data-aba="relacoes">
+    <div class="fiasco-bloco fiasco-bloco-mapa">
+      <svg class="fiasco-mini-mapa" viewBox="0 0 560 160" xmlns="http://www.w3.org/2000/svg">
+        <line x1="280" y1="32" x2="105" y2="128" class="linha"/>
+        <line x1="280" y1="32" x2="455" y2="128" class="linha"/>
+        <rect x="190" y="8" width="180" height="46" rx="8" class="no eu"/>
+        <text x="280" y="37" class="nome">{{actor.name}}</text>
+        <text x="150" y="78" class="rotulo">{{system.esquerda.relacao}}</text>
+        <text x="150" y="94" class="detalhe">{{system.esquerda.detalhe}}</text>
+        <text x="410" y="78" class="rotulo">{{system.direita.relacao}}</text>
+        <text x="410" y="94" class="detalhe">{{system.direita.detalhe}}</text>
+        <rect x="15" y="108" width="180" height="42" rx="8" class="no vizinho"/>
+        <text x="105" y="134" class="nome">{{esqNome}}</text>
+        <rect x="365" y="108" width="180" height="42" rx="8" class="no vizinho"/>
+        <text x="455" y="134" class="nome">{{dirNome}}</text>
       </svg>
       {{#if mapaAtivo}}
       <button type="button" class="fiasco-btn-mapa" data-action="abrirMapa"><i class="fas fa-diagram-project"></i> Mapa completo da mesa</button>
       {{/if}}
-    </section>
+    </div>
 
     <div class="fiasco-relacoes">
-      <section class="fiasco-bloco fiasco-postit">
+      <div class="fiasco-bloco fiasco-postit">
         <h3>← Vizinho à esquerda</h3>
         <label>Jogador
           <select name="system.esquerda.vizinho">{{selectOptions vizinhos selected=system.esquerda.vizinho}}</select>
         </label>
-        <label>Relação <input type="text" name="system.esquerda.relacao" value="{{system.esquerda.relacao}}" placeholder="Ex.: Trabalho — Dono de Empreiteira / Lobista"></label>
-        <label>Detalhe <input type="text" name="system.esquerda.detalhe" value="{{system.esquerda.detalhe}}" placeholder="Necessidade, objeto ou local ligado"></label>
-      </section>
+        <label>Relação <input type="text" name="system.esquerda.relacao" value="{{system.esquerda.relacao}}" placeholder="Ex.: Trabalho — Lobista"></label>
+        <label>Detalhe <input type="text" name="system.esquerda.detalhe" value="{{system.esquerda.detalhe}}" placeholder="Necessidade, objeto ou local"></label>
+      </div>
 
-      <section class="fiasco-bloco fiasco-postit">
+      <div class="fiasco-bloco fiasco-postit">
         <h3>Vizinho à direita →</h3>
         <label>Jogador
           <select name="system.direita.vizinho">{{selectOptions vizinhos selected=system.direita.vizinho}}</select>
         </label>
-        <label>Relação <input type="text" name="system.direita.relacao" value="{{system.direita.relacao}}" placeholder="Ex.: Romance — Ex-Marido / Mulher"></label>
-        <label>Detalhe <input type="text" name="system.direita.detalhe" value="{{system.direita.detalhe}}" placeholder="Necessidade, objeto ou local ligado"></label>
-      </section>
+        <label>Relação <input type="text" name="system.direita.relacao" value="{{system.direita.relacao}}" placeholder="Ex.: Romance — Ex-Mulher"></label>
+        <label>Detalhe <input type="text" name="system.direita.detalhe" value="{{system.direita.detalhe}}" placeholder="Necessidade, objeto ou local"></label>
+      </div>
     </div>
+  </section>
 
-    <section class="fiasco-bloco">
-      <h3>Elementos</h3>
+  <!-- ABA: ELEMENTOS -->
+  <section class="fiasco-aba {{#if aba.elementos}}ativa{{/if}}" data-aba="elementos">
+    <div class="fiasco-bloco">
       <label>Necessidade <input type="text" name="system.necessidade" value="{{system.necessidade}}" placeholder="Ex.: De entrar no esquema — por não ter opção"></label>
       <label>Objeto <input type="text" name="system.objeto" value="{{system.objeto}}" placeholder="Ex.: Mala de dólares"></label>
       <label>Local <input type="text" name="system.local" value="{{system.local}}" placeholder="Ex.: Cafezinho da Câmara"></label>
-    </section>
+    </div>
 
-    <section class="fiasco-bloco">
+    <div class="fiasco-bloco">
       <h3>Dados recebidos</h3>
       <div class="fiasco-contadores">
         <div class="fiasco-contador branco">
@@ -72,11 +80,11 @@
           <button type="button" data-action="contador" data-campo="pretos" data-passo="1">+</button>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <section class="fiasco-bloco">
-      <h3>Anotações</h3>
-      <textarea name="system.notas" rows="5" placeholder="Planos, segredos, o que deu errado...">{{system.notas}}</textarea>
-    </section>
-  </div>
+  <!-- ABA: ANOTAÇÕES -->
+  <section class="fiasco-aba {{#if aba.notas}}ativa{{/if}}" data-aba="notas">
+    <textarea class="fiasco-notas" name="system.notas" placeholder="Planos, segredos, o que deu errado...">{{system.notas}}</textarea>
+  </section>
 </section>

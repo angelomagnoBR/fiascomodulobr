@@ -34,12 +34,28 @@
 .fiasco-topo { display: flex; gap: 12px; align-items: center; }
 .fiasco-retrato {
   width: 84px; height: 84px; object-fit: cover; border: 3px solid var(--f-azul);
-  border-radius: 6px; background: #fff; cursor: pointer; flex: 0 0 auto;
+  border-radius: 6px; background: #3b342c; cursor: pointer; flex: 0 0 auto;
 }
 .fiasco-identidade { flex: 1; display: flex; flex-direction: column; gap: 6px; }
 .fiasco-nome { font-size: 22px !important; font-weight: 700; }
 
-.fiasco-corpo { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
+/* Ficha de jogador: topo fixo + abas que rolam sozinhas */
+.ficha-jogador .window-content { display: flex; flex-direction: column; overflow: hidden; }
+.fiasco-jogador { flex: 1; min-height: 0; }
+.fiasco-jogador .fiasco-retrato { width: 72px; height: 72px; }
+
+.fiasco-abas { display: flex; gap: 4px; border-bottom: 2px solid var(--f-azul); flex: 0 0 auto; }
+.fiasco-abas button {
+  flex: 1; margin: 0; border: none; border-radius: 6px 6px 0 0; line-height: 30px;
+  background: rgba(255, 255, 255, .3); color: var(--f-tinta-suave); font-weight: 700;
+}
+.fiasco-abas button:hover { background: rgba(255, 255, 255, .6); color: var(--f-tinta); box-shadow: none; }
+.fiasco-abas button.ativa { background: var(--f-azul); color: var(--f-tinta); }
+
+.fiasco-aba { display: none; flex-direction: column; gap: 10px; flex: 1; min-height: 0; overflow-y: auto; padding: 2px 4px 6px 2px; }
+.fiasco-aba.ativa { display: flex; }
+.fiasco-bloco-mapa { display: flex; flex-direction: column; gap: 4px; }
+.fiasco-notas { flex: 1; min-height: 200px; }
 
 .fiasco-bloco {
   background: rgba(255, 255, 255, .35); border: 2px solid var(--f-azul);
@@ -60,7 +76,8 @@
 .fiasco-mini-mapa .no.eu { fill: var(--f-azul); stroke: var(--f-azul-esc); }
 .fiasco-mini-mapa text, .fiasco-mapa text { text-anchor: middle; font-family: "Signika", sans-serif; fill: var(--f-tinta); }
 .fiasco-mini-mapa .nome, .fiasco-mapa .nome { font-size: 15px; font-weight: 700; }
-.fiasco-mini-mapa .rotulo, .fiasco-mapa .rotulo { font-size: 12px; font-weight: 700; fill: var(--f-vermelho); }
+.fiasco-mini-mapa .rotulo, .fiasco-mapa .rotulo { font-size: 13px; font-weight: 700; fill: var(--f-vermelho); paint-order: stroke; stroke: var(--f-papel); stroke-width: 4px; }
+.fiasco-mini-mapa .detalhe { paint-order: stroke; stroke: var(--f-papel); stroke-width: 4px; }
 .fiasco-mini-mapa .detalhe, .fiasco-mapa .detalhe { font-size: 11px; fill: var(--f-tinta-suave); }
 .fiasco-btn-mapa { margin-top: 4px; }
 
