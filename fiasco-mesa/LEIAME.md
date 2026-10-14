@@ -87,6 +87,17 @@ Para outro Cenário, mande o PDF para o Claude e peça o `.json` no formato `fia
   ]
 }
 ```
+### Pacotes (vários Cenários de uma vez)
+O mesmo botão aceita um pacote. Ele cria a pasta **Fiasco — <título>** com uma subpasta por Cenário, mais diários avulsos (como um resumo de regras):
+```json
+{
+  "formato": "fiasco-mesa-pacote-1",
+  "titulo": "Livro Básico",
+  "diarios": [ { "nome": "Regras", "paginas": [ { "nome": "Preparação", "blocos": [ { "titulo": "opcional", "paragrafos": ["..."], "lista": ["..."] } ] } ] } ],
+  "cenarios": [ { "titulo": "...", "tabelas": [ ... ] } ]
+}
+```
+
 `tabelasExtras` serve para tabelas com outra fórmula. Sem `formula`, a tabela vai só para o Diário (como a Conclusão).
 
 > Os Cenários são material com direitos autorais. Use os arquivos só no seu mundo, a partir de cópias que você comprou.

@@ -514,12 +514,17 @@ function resultadoTabela(texto, faixa) {
   return { ...base, text: texto };
 }
 
-async function importarPlayset(dados) {
+/**
+ * Importa um Cenário. Sem pasta-mãe, cria "Fiasco — <título>" na raiz;
+ * com pasta-mãe (vindo de um pacote), cria a subpasta "<título>" dentro dela.
+ */
+async function importarPlayset(dados, { maeJ = null, maeT = null, abrir = true } = {}) {
   if (!dados?.titulo || !Array.isArray(dados.tabelas)) throw new Error("Arquivo não parece um Cenário do Fiasco: Mesa.");
   const titulo = dados.titulo;
+  const nomePasta = maeJ ? titulo : `Fiasco — ${titulo}`;
 
-  const pastaJ = await Folder.create({ name: `Fiasco — ${titulo}`, type: "JournalEntry" });
-  const pastaT = await Folder.create({ name: `Fiasco — ${titulo}`, type: "RollTable" });
+  const pastaJ = await Folder.create({ name: nomePasta, type: "JournalEntry", folder: maeJ?.id ?? null });
+  const pastaT = await Folder.create({ name: nomePasta, type: "RollTable", folder: maeT?.id ?? null });
 
   // Diário
   const paginas = [];
@@ -577,8 +582,49 @@ async function importarPlayset(dados) {
     });
   }
 
-  ui.notifications.info(`Fiasco: Cenário "${titulo}" importado.`);
-  diario.sheet.render(true);
+  if (abrir) {
+    ui.notifications.info(`Fiasco: Cenário "${titulo}" importado.`);
+    diario.sheet.render(true);
+  }
+  return diario;
+}
+
+/** Monta uma página de diário a partir de blocos { titulo, paragrafos[], lista[] }. */
+function htmlBlocos(blocos = []) {
+  return blocos.map((b) => [
+    b.titulo ? `<h2>${esc(b.titulo)}</h2>` : "",
+    (b.paragrafos ?? []).map((t) => `<p>${esc(t)}</p>`).join(""),
+    b.lista?.length ? `<ul>${b.lista.map((t) => `<li>${esc(t)}</li>`).join("")}</ul>` : ""
+  ].join("")).join("");
+}
+
+/**
+ * Importa um pacote: vários Cenários + diários avulsos (ex.: resumo das regras),
+ * tudo dentro da pasta "Fiasco — <título do pacote>".
+ */
+async function importarPacote(pacote) {
+  const titulo = pacote.titulo || "Pacote";
+  const maeJ = await Folder.create({ name: `Fiasco — ${titulo}`, type: "JournalEntry" });
+  const maeT = await Folder.create({ name: `Fiasco — ${titulo}`, type: "RollTable" });
+
+  let primeiro = null;
+  for (const d of pacote.diarios ?? []) {
+    const j = await JournalEntry.create({
+      name: d.nome, folder: maeJ.id,
+      ownership: { default: CONST.DOCUMENT_OWNERSHIP_LEVELS.OBSERVER },
+      pages: (d.paginas ?? []).map((pg) => ({ name: pg.nome, type: "text", text: { content: htmlBlocos(pg.blocos) } }))
+    });
+    primeiro ??= j;
+  }
+  for (const c of pacote.cenarios ?? []) await importarPlayset(c, { maeJ, maeT, abrir: false });
+
+  ui.notifications.info(`Fiasco: pacote "${titulo}" importado (${(pacote.cenarios ?? []).length} Cenários).`);
+  primeiro?.sheet.render(true);
+}
+
+/** Decide se o arquivo é um Cenário avulso ou um pacote. */
+function importarArquivo(dados) {
+  return Array.isArray(dados?.cenarios) ? importarPacote(dados) : importarPlayset(dados);
 }
 
 async function dialogoImportar() {
@@ -586,7 +632,7 @@ async function dialogoImportar() {
     window: { title: "Fiasco: Importar Cenário" },
     content: `
       <div class="fiasco-dialogo">
-        <p>Escolha o arquivo <b>.json</b> do Cenário. Ele cria um Diário com as listas e as Tabelas de Rolagem.</p>
+        <p>Escolha o arquivo <b>.json</b> de um Cenário ou de um pacote (vários Cenários). Ele cria os Diários e as Tabelas de Rolagem.</p>
         <input type="file" name="arquivo" accept=".json,application/json">
       </div>`,
     buttons: [
@@ -597,7 +643,7 @@ async function dialogoImportar() {
   });
   if (!(arquivo instanceof File)) return;
   try {
-    await importarPlayset(JSON.parse(await arquivo.text()));
+    await importarArquivo(JSON.parse(await arquivo.text()));
   } catch (e) {
     console.error(e);
     ui.notifications.error(`Fiasco: falha ao importar — ${e.message}`);
@@ -939,7 +985,7 @@ Hooks.once("init", () => {
   registrarFontes();
   if (ativo("escrever")) registrarModoEscrita();
 
-  const api = { alternarEscrita, escreverEm, redimensionarDados, criarJogador, dialogoCriarJogador, criarDados, dialogoCriarDados, rolarSelecionados, rolarTodos, rolarTokens, abrirMapa, importarPlayset, dialogoImportar, definirFace };
+  const api = { alternarEscrita, escreverEm, redimensionarDados, criarJogador, dialogoCriarJogador, criarDados, dialogoCriarDados, rolarSelecionados, rolarTodos, rolarTokens, abrirMapa, importarPlayset, importarPacote, importarArquivo, dialogoImportar, definirFace };
   game.modules.get(MOD).api = api;
   globalThis.FiascoMesa = api;
 });
