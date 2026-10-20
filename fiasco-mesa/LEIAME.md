@@ -39,6 +39,20 @@ O módulo traz cinco fontes: Máquina de escrever (Special Elite), Caneta pincel
 
 Jogadores sem permissão de desenhar também podem escrever: o texto é criado pelo GM em nome deles, então **um GM precisa estar conectado**. Os textos são Desenhos comuns do Foundry, então o GM também pode movê-los pela camada de Desenhos.
 
+## Votação do desfecho
+Quando o narrador escolhe **Estabelecer**, os outros decidem o dado da cena. Pelo livro é por consenso; aqui vira voto secreto.
+1. Clique na **balança** nos controles de Token (ou **Alt+V**) e escolha quem está narrando.
+2. Os outros jogadores votam em **Branco** (positivo) ou **Preto** (negativo). Ninguém vê o voto de ninguém; aparece só quantos já votaram.
+3. Quando todos votam, o resultado aparece na tela de todo mundo e no chat. Aí é só arrastar um dado daquela cor.
+4. **Empate**: pela regra (p. 32), o dono da cena decide. O narrador recebe os dois botões.
+5. O narrador ou o GM podem **Encerrar agora** (conta os votos que já chegaram) ou **Cancelar**.
+
+Precisa de um GM conectado (ele faz a contagem). Em *Configurar Módulos* dá para desligar a votação ou fazer o GM não votar (**Mestre também vota**).
+
+## Texto na mesa: girar e moldura
+- **Girar**: passe o mouse sobre um texto seu e use **Shift + rodinha** (15° por clique). Ou ajuste o **Giro** na janela do texto.
+- **Moldura**: desligada por padrão. Na janela do texto, marque **Moldura** e escolha cor e espessura.
+
 ## Dice So Nice
 Brancos e pretos rolam com cores próprias e a face do token muda depois da animação. Para mudar as cores 3D, edite `APARENCIA_DSN` no topo de `scripts/fiasco.js`.
 

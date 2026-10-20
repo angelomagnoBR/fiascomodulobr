@@ -160,3 +160,75 @@ body.fiasco-escrevendo #board { cursor: crosshair !important; }
   box-shadow: inset 0 0 18px rgba(0, 0, 0, .6);
 }
 .fiasco-previa span { white-space: pre-wrap; line-height: 1.15; text-shadow: 0 1px 2px rgba(0, 0, 0, .55); }
+
+/* Escrever na mesa: giro e moldura */
+.fiasco-escrita .fiasco-giro { align-items: center; gap: 6px; }
+.fiasco-escrita .fiasco-giro input[type="range"] { flex: 1; }
+.fiasco-escrita .fiasco-giro button { flex: 0 0 auto; width: 34px; min-width: 0; height: 28px; line-height: 26px; padding: 0; margin: 0; }
+.fiasco-escrita .fiasco-giro-valor { font-weight: 700; }
+.fiasco-escrita .fiasco-moldura { align-items: center; flex-wrap: wrap; }
+.fiasco-escrita .fiasco-moldura label.check { flex-direction: row; align-items: center; gap: 6px; }
+.fiasco-escrita .fiasco-moldura-larg { flex: 1 1 140px !important; }
+.fiasco-escrita .fiasco-moldura input:disabled { opacity: .4; }
+.fiasco-previa span { display: inline-block; transition: transform .15s; }
+
+/* Votação do desfecho: painel */
+#fiasco-painel-voto {
+  position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 90;
+  width: min(360px, calc(100vw - 32px)); padding: 10px 14px 12px;
+  background: rgba(24, 20, 16, .95); color: #efe5cf; border: 1px solid #e8a92e; border-radius: 8px;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, .6); font-family: "Signika", sans-serif; text-align: center;
+}
+#fiasco-painel-voto h3 { margin: 6px 0 4px; border: none; font-size: 17px; color: #fff; }
+#fiasco-painel-voto p { margin: 0 0 8px; font-size: 13px; color: #d7cbb3; }
+.fiasco-voto-titulo { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #e8a92e; }
+.fiasco-voto-dados { display: flex; gap: 10px; justify-content: center; }
+.fiasco-voto-dados button {
+  flex: 1; display: flex; align-items: center; gap: 8px; margin: 0; padding: 6px 8px;
+  background: rgba(255, 255, 255, .06); color: #efe5cf; border: 2px solid rgba(255, 255, 255, .15); border-radius: 8px;
+}
+.fiasco-voto-dados button:hover { background: rgba(255, 255, 255, .14); box-shadow: none; }
+.fiasco-voto-dados button.ativo { border-color: #e8a92e; background: rgba(232, 169, 46, .18); }
+.fiasco-voto-dados img { width: 46px; height: 46px; border: none; flex: 0 0 auto; }
+.fiasco-voto-dados span { display: flex; flex-direction: column; align-items: flex-start; font-weight: 700; font-size: 15px; line-height: 1.1; }
+.fiasco-voto-dados small { font-weight: 400; font-size: 11px; color: #bfb39b; }
+.fiasco-voto-progresso { margin-top: 8px; font-size: 12px; color: #bfb39b; }
+.fiasco-voto-comandos { display: flex; gap: 6px; margin-top: 10px; }
+.fiasco-voto-comandos button { flex: 1; margin: 0; font-size: 12px; line-height: 24px; color: #efe5cf; background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .2); }
+
+/* Votação do desfecho: efeito do resultado */
+#fiasco-desfecho {
+  position: fixed; inset: 0; z-index: 95; pointer-events: none;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, .55) 0%, rgba(0, 0, 0, 0) 65%);
+  animation: fiasco-fundo-in .35s ease-out both;
+}
+#fiasco-desfecho.saindo { animation: fiasco-fundo-out .6s ease-in both; }
+.fiasco-desfecho-caixa { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.fiasco-desfecho-caixa img {
+  width: 170px; height: 170px; border: none;
+  animation: fiasco-dado-cai .9s cubic-bezier(.2, 1.4, .4, 1) both;
+}
+#fiasco-desfecho.branco img { filter: drop-shadow(0 0 28px rgba(255, 246, 214, .95)); }
+#fiasco-desfecho.preto img { filter: drop-shadow(0 0 28px rgba(208, 52, 44, .95)); }
+.fiasco-desfecho-texto { display: flex; flex-direction: column; align-items: center; animation: fiasco-texto-in .5s .45s ease-out both; }
+.fiasco-desfecho-texto b {
+  font-family: "Alfa Slab One", "Signika", sans-serif; font-size: 52px; text-transform: uppercase; letter-spacing: .03em;
+  text-shadow: 0 3px 12px rgba(0, 0, 0, .8);
+}
+#fiasco-desfecho.branco .fiasco-desfecho-texto b { color: #fff6d6; }
+#fiasco-desfecho.preto .fiasco-desfecho-texto b { color: #e0473e; }
+.fiasco-desfecho-texto span { font-size: 20px; color: #efe5cf; text-shadow: 0 2px 6px rgba(0, 0, 0, .9); }
+.fiasco-desfecho-texto small { font-size: 14px; color: #cbbfa6; text-shadow: 0 2px 6px rgba(0, 0, 0, .9); }
+
+@keyframes fiasco-dado-cai {
+  0% { transform: translateY(-60vh) rotate(-540deg) scale(.6); opacity: 0; }
+  60% { opacity: 1; }
+  100% { transform: translateY(0) rotate(0) scale(1); opacity: 1; }
+}
+@keyframes fiasco-texto-in { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes fiasco-fundo-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fiasco-fundo-out { from { opacity: 1; } to { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .fiasco-desfecho-caixa img, .fiasco-desfecho-texto { animation: none; }
+}

@@ -32,6 +32,8 @@ const OPCOES = {
   hudDado:      { name: "Botão de rolar no token", hint: "Adiciona um botão de rolar no HUD do token de dado (rola todos os dados selecionados).", type: Boolean, default: true, reload: true },
   mapa:         { name: "Mapa de Relações", hint: "Habilita a janela com o mapa de relações de todos os jogadores.", type: Boolean, default: true, reload: true },
   escrever:     { name: "Escrever na mesa", hint: "Botão de caneta nos controles de Token (e Alt+T): escreva na mesa, com fonte e cor à escolha, e todos veem.", type: Boolean, default: true, reload: true },
+  votacao:      { name: "Votação do desfecho", hint: "Botão de balança nos controles de Token (e Alt+V): os outros jogadores votam em segredo no dado branco ou preto da cena.", type: Boolean, default: true, reload: true },
+  gmVota:       { name: "Mestre também vota", hint: "Desligue se o GM só conduz a mesa e não joga.", type: Boolean, default: true, reload: false },
   importador:   { name: "Importador de Cenário", hint: "Mostra o botão 'Importar Cenário' na aba de Diários (só GM).", type: Boolean, default: true, reload: true },
   diceSoNice:   { name: "Usar Dice So Nice", hint: "Anima a rolagem em 3D com dados brancos e pretos (precisa do módulo Dice So Nice).", type: Boolean, default: true, reload: false },
   mensagemChat: { name: "Mensagem no chat", hint: "Mostra no chat o resultado de cada rolagem de dados.", type: Boolean, default: true, reload: false },
@@ -673,7 +675,7 @@ const CORES_MESA = [
 ];
 
 const SOCKET = `module.${MOD}`;
-const PADRAO_ESCRITA = { fonte: "Special Elite", cor: "#efe5cf", tamanho: 48 };
+const PADRAO_ESCRITA = { fonte: "Special Elite", cor: "#efe5cf", tamanho: 48, moldura: false, molduraCor: "#1b1b1b", molduraLargura: 4 };
 
 function registrarFontes() {
   CONFIG.fontDefinitions ??= {};
@@ -705,14 +707,36 @@ function medirTexto(texto, fonte, tamanho) {
 }
 
 /** Monta os dados do Desenho de texto, centrado no ponto (cx, cy). */
-function dadosDesenho({ texto, fonte, cor, tamanho }, cx, cy) {
+function dadosDesenho({ texto, fonte, cor, tamanho, giro = 0, moldura = false, molduraCor = "#1b1b1b", molduraLargura = 4 }, cx, cy) {
   const { w, h } = medirTexto(texto, fonte, tamanho);
+  const folga = moldura ? Math.round(tamanho * 0.3) : 0;
+  const W = w + folga * 2, H = h + folga * 2;
   return {
-    x: Math.round(cx - w / 2), y: Math.round(cy - h / 2),
-    shape: { type: "r", width: w, height: h },
+    x: Math.round(cx - W / 2), y: Math.round(cy - H / 2),
+    shape: { type: "r", width: W, height: H },
+    rotation: normalizarGiro(giro),
     text: texto, fontFamily: fonte, fontSize: tamanho, textColor: cor, textAlpha: 1,
-    fillType: CONST.DRAWING_FILL_TYPES.NONE, strokeWidth: 0, strokeAlpha: 0
+    fillType: CONST.DRAWING_FILL_TYPES.NONE,
+    strokeWidth: moldura ? Math.max(1, Number(molduraLargura) || 4) : 0,
+    strokeColor: molduraCor, strokeAlpha: moldura ? 1 : 0
   };
+}
+
+const normalizarGiro = (g) => ((Math.round(Number(g) || 0) % 360) + 540) % 360 - 180;
+
+/** O ponto (coordenadas da cena) está dentro do texto, levando o giro em conta? */
+function pontoNoTexto(d, ponto) {
+  const cx = d.x + d.shape.width / 2, cy = d.y + d.shape.height / 2;
+  const a = -((d.rotation ?? 0) * Math.PI) / 180;
+  const dx = ponto.x - cx, dy = ponto.y - cy;
+  const lx = dx * Math.cos(a) - dy * Math.sin(a), ly = dx * Math.sin(a) + dy * Math.cos(a);
+  return Math.abs(lx) <= d.shape.width / 2 && Math.abs(ly) <= d.shape.height / 2;
+}
+
+/** Último texto (de cima) sob o ponto que este usuário pode editar. */
+function textoEm(ponto) {
+  return canvas.scene.drawings.contents.filter((d) => ehTexto(d)
+    && (game.user.isGM || autorId(d) === game.user.id) && pontoNoTexto(d, ponto)).pop();
 }
 
 /* Quem não tem permissão de desenhar pede ao GM conectado, que cria o texto em nome dele. */
@@ -721,11 +745,12 @@ function pedirAoGM(acao, dados) {
   game.socket.emit(SOCKET, { acao, dados, usuario: game.user.id, cena: canvas.scene.id });
 }
 
-const CAMPOS_TEXTO = ["x", "y", "shape", "text", "fontFamily", "fontSize", "textColor", "textAlpha", "fillType", "strokeWidth", "strokeAlpha"];
+const CAMPOS_TEXTO = ["x", "y", "shape", "rotation", "text", "fontFamily", "fontSize", "textColor", "textAlpha", "fillType", "strokeWidth", "strokeColor", "strokeAlpha"];
 const filtrar = (d) => Object.fromEntries(CAMPOS_TEXTO.filter((k) => k in d).map((k) => [k, d[k]]));
 
 function registrarSocket() {
   game.socket.on(SOCKET, async (msg) => {
+    if (msg?.tipo === "fiascoVoto") return; // votação tem o próprio tratamento
     if (!game.user.isGM || gmAtivo()?.id !== game.user.id) return;
     const scene = game.scenes.get(msg.cena);
     if (!scene || !game.users.get(msg.usuario)) return;
@@ -757,9 +782,15 @@ async function apagarTexto(doc) {
 
 /** Janela de escrever/editar, com prévia ao vivo. */
 async function dialogoTexto(existente) {
+  const css = (c, padrao) => (c ? (c.css ?? String(c)) : padrao);
   const base = existente
-    ? { texto: existente.text, fonte: existente.fontFamily, cor: existente.textColor?.css ?? String(existente.textColor), tamanho: existente.fontSize }
-    : { texto: "", ...ultimaEscrita() };
+    ? {
+      texto: existente.text, fonte: existente.fontFamily, cor: css(existente.textColor, "#efe5cf"), tamanho: existente.fontSize,
+      giro: existente.rotation ?? 0,
+      moldura: (existente.strokeWidth ?? 0) > 0 && (existente.strokeAlpha ?? 1) > 0,
+      molduraCor: css(existente.strokeColor, "#1b1b1b"), molduraLargura: existente.strokeWidth || 4
+    }
+    : { texto: "", giro: 0, ...ultimaEscrita() };
 
   const nossas = Object.entries(FONTES_MESA)
     .map(([f, o]) => `<option value="${f}" ${f === base.fonte ? "selected" : ""}>${o.rotulo} (${f})</option>`).join("");
@@ -781,6 +812,19 @@ async function dialogoTexto(existente) {
       <label>Tamanho <span class="fiasco-tam-valor">${base.tamanho}</span>
         <input type="range" name="tamanho" min="12" max="200" step="2" value="${base.tamanho}">
       </label>
+      <label>Giro <span class="fiasco-giro-valor">${base.giro}°</span>
+        <div class="fiasco-linha fiasco-giro">
+          <button type="button" data-giro="-15" title="Girar 15° para a esquerda"><i class="fas fa-rotate-left"></i></button>
+          <input type="range" name="giro" min="-180" max="180" step="1" value="${base.giro}">
+          <button type="button" data-giro="15" title="Girar 15° para a direita"><i class="fas fa-rotate-right"></i></button>
+          <button type="button" data-giro="0" title="Deixar reto">0°</button>
+        </div>
+      </label>
+      <div class="fiasco-linha fiasco-moldura">
+        <label class="check"><input type="checkbox" name="moldura" ${base.moldura ? "checked" : ""}> Moldura</label>
+        <label>Cor <input type="color" name="molduraCor" value="${base.molduraCor}"></label>
+        <label class="fiasco-moldura-larg">Espessura <input type="range" name="molduraLargura" min="1" max="20" step="1" value="${base.molduraLargura}"></label>
+      </div>
       <div class="fiasco-previa"><span></span></div>
     </div>`;
 
@@ -788,7 +832,11 @@ async function dialogoTexto(existente) {
     texto: form.elements.texto.value.replace(/\s+$/, ""),
     fonte: form.elements.fonte.value,
     cor: form.elements.cor.value,
-    tamanho: Number(form.elements.tamanho.value) || 48
+    tamanho: Number(form.elements.tamanho.value) || 48,
+    giro: Number(form.elements.giro.value) || 0,
+    moldura: form.elements.moldura.checked,
+    molduraCor: form.elements.molduraCor.value,
+    molduraLargura: Number(form.elements.molduraLargura.value) || 4
   });
 
   const buttons = [{ action: "ok", label: existente ? "Salvar" : "Escrever", icon: "fas fa-pen-nib", default: true, callback: (ev, btn) => ler(btn.form) }];
@@ -815,8 +863,19 @@ async function dialogoTexto(existente) {
         previa.style.fontFamily = `"${v.fonte}", sans-serif`;
         previa.style.color = v.cor;
         previa.style.fontSize = `${Math.min(v.tamanho, 64)}px`;
+        previa.style.transform = `rotate(${v.giro}deg)`;
+        previa.style.border = v.moldura ? `${Math.max(1, Math.round(v.molduraLargura / 2))}px solid ${v.molduraCor}` : "none";
+        previa.style.padding = v.moldura ? "0.15em 0.4em" : "0";
         tamValor.textContent = v.tamanho;
+        giroValor.textContent = `${v.giro}°`;
+        root.querySelectorAll(".fiasco-moldura input:not([name='moldura'])").forEach((i) => { i.disabled = !v.moldura; });
       };
+      const giroValor = root.querySelector(".fiasco-giro-valor");
+      root.querySelectorAll("[data-giro]").forEach((b) => b.addEventListener("click", () => {
+        const passo = Number(b.dataset.giro);
+        form.elements.giro.value = passo === 0 ? 0 : normalizarGiro(Number(form.elements.giro.value) + passo);
+        atualizar();
+      }));
       form.addEventListener("input", atualizar);
       form.elements.fonte.addEventListener("change", async () => { await carregarFonte(form.elements.fonte.value); atualizar(); });
       root.querySelectorAll(".fiasco-amostra").forEach((b) => b.addEventListener("click", () => { form.elements.cor.value = b.dataset.cor; atualizar(); }));
@@ -828,16 +887,14 @@ async function dialogoTexto(existente) {
 
 /** Abre a janela no ponto clicado: edita o texto que está ali (se for seu) ou cria um novo. */
 async function escreverEm(ponto) {
-  const alvo = canvas.scene.drawings.contents.filter((d) => ehTexto(d)
-    && (game.user.isGM || autorId(d) === game.user.id)
-    && ponto.x >= d.x && ponto.x <= d.x + d.shape.width && ponto.y >= d.y && ponto.y <= d.y + d.shape.height).pop();
+  const alvo = textoEm(ponto);
 
   const res = await dialogoTexto(alvo);
   if (res === "apagar" && alvo) return apagarTexto(alvo);
   if (!res || typeof res !== "object") return;
   if (!res.texto.trim()) return ui.notifications.warn("Fiasco: o texto está vazio.");
 
-  await game.settings.set(MOD, "ultimaEscrita", { fonte: res.fonte, cor: res.cor, tamanho: res.tamanho });
+  await game.settings.set(MOD, "ultimaEscrita", { fonte: res.fonte, cor: res.cor, tamanho: res.tamanho, moldura: res.moldura, molduraCor: res.molduraCor, molduraLargura: res.molduraLargura });
   await carregarFonte(res.fonte, res.tamanho);
 
   if (alvo) {
@@ -860,7 +917,7 @@ function alternarEscrita(ligar = !modoEscrita) {
   if (ligar) {
     avisoEscrita = document.createElement("div");
     avisoEscrita.className = "fiasco-aviso-escrita";
-    avisoEscrita.innerHTML = `<i class="fas fa-pen-nib"></i> Clique na mesa onde quer escrever, ou num texto seu para editar. <b>Esc</b> cancela.`;
+    avisoEscrita.innerHTML = `<i class="fas fa-pen-nib"></i> Clique na mesa onde quer escrever, ou num texto seu para editar. <b>Esc</b> cancela. Para girar um texto: <b>Shift + rodinha</b> em cima dele.`;
     document.body.append(avisoEscrita);
   }
 }
@@ -878,6 +935,29 @@ function registrarModoEscrita() {
   document.addEventListener("keydown", (ev) => {
     if (modoEscrita && ev.key === "Escape") alternarEscrita(false);
   }, true);
+
+  // Shift + rodinha do mouse sobre um texto seu: gira 15° por clique da rodinha
+  const giroPendente = new Map();
+  document.addEventListener("wheel", (ev) => {
+    if (!ev.shiftKey || !canvas.ready || ev.target !== canvas.app.view) return;
+    const alvo = textoEm(canvas.canvasCoordinatesFromClient({ x: ev.clientX, y: ev.clientY }));
+    if (!alvo) return;
+    ev.preventDefault();
+    ev.stopImmediatePropagation();
+    const delta = ev.deltaY || ev.deltaX;
+    if (!delta) return;
+    const p = giroPendente.get(alvo.id) ?? { giro: alvo.rotation ?? 0, timer: null };
+    p.giro = normalizarGiro(p.giro + (delta > 0 ? 15 : -15));
+    clearTimeout(p.timer);
+    p.timer = setTimeout(() => { giroPendente.delete(alvo.id); editarTexto(alvo, { rotation: p.giro }); }, 150);
+    giroPendente.set(alvo.id, p);
+  }, { capture: true, passive: false });
+
+  // Textos da mesa não mostram a moldura de seleção do Foundry, só quando estão selecionados
+  Hooks.on("refreshDrawing", (drawing) => {
+    if (!ehTexto(drawing.document) || !drawing.frame) return;
+    drawing.frame.visible = !!drawing.controlled;
+  });
 
   Hooks.on("canvasTearDown", () => { if (modoEscrita) alternarEscrita(false); });
 
@@ -897,6 +977,286 @@ function registrarModoEscrita() {
     hint: "Liga o modo de escrita: o próximo clique na mesa abre a janela de texto.",
     editable: [{ key: "KeyT", modifiers: ["Alt"] }],
     onDown: () => { alternarEscrita(); return true; }
+  });
+}
+
+/* ------------------------------------------------------------------ */
+/*  Votação do desfecho                                                */
+/* ------------------------------------------------------------------ */
+/*
+ * Regra (livro, p. 29 e 32): quem Estabelece a cena recebe o dado que os
+ * amigos escolhem por consenso; sem consenso, o dono da cena decide.
+ * Aqui o consenso vira voto secreto. O GM conectado coordena a contagem,
+ * para ninguém (nem o narrador) ver os votos de cada um.
+ */
+
+const VOTO = "fiascoVoto";
+let votoGM = null;   // estado da votação, só no GM coordenador
+let votoAtual = null; // o que este cliente sabe da votação aberta
+let painelVoto = null;
+
+const nomeUsuario = (id) => game.users.get(id)?.name ?? "?";
+const souCoordenador = () => game.user.isGM && gmAtivo()?.id === game.user.id;
+
+/** Mensagem para o GM coordenador (ou processa aqui, se eu for ele). */
+function paraCoordenador(acao, dados = {}) {
+  const msg = { tipo: VOTO, acao, dados, usuario: game.user.id };
+  if (souCoordenador()) return coordenar(msg);
+  if (!gmAtivo()) return ui.notifications.warn("Fiasco: é preciso um GM conectado para a votação.");
+  game.socket.emit(SOCKET, msg);
+}
+
+/** Mensagem do coordenador para todos (inclusive ele mesmo). */
+function paraTodos(acao, dados = {}) {
+  const msg = { tipo: VOTO, acao, dados };
+  game.socket.emit(SOCKET, msg);
+  receberVoto(msg);
+}
+
+function estadoPublico() {
+  const v = votoGM;
+  return { id: v.id, narrador: v.narrador, eleitores: v.eleitores, votaram: Object.keys(v.votos), fase: v.fase };
+}
+
+function placar(v) {
+  const votos = Object.values(v.votos);
+  return { branco: votos.filter((c) => c === "branco").length, preto: votos.filter((c) => c === "preto").length };
+}
+
+/* --- Lado do GM coordenador ------------------------------------------ */
+
+function coordenar(msg) {
+  const { acao, dados, usuario } = msg;
+  const v = votoGM;
+
+  if (acao === "abrir") {
+    if (v) return;
+    const narrador = dados.narrador;
+    const eleitores = game.users.filter((u) => u.active && u.id !== narrador && (ativo("gmVota") || !u.isGM)).map((u) => u.id);
+    if (!eleitores.length) {
+      const aviso = "Fiasco: ninguém conectado para votar.";
+      if (usuario === game.user.id) ui.notifications.warn(aviso);
+      return;
+    }
+    votoGM = { id: foundry.utils.randomID(), narrador, eleitores, votos: {}, fase: "votando" };
+    return paraTodos("estado", estadoPublico());
+  }
+  if (!v || dados.id !== v.id) return;
+  const podeComandar = usuario === v.narrador || game.users.get(usuario)?.isGM;
+
+  if (acao === "votar" && v.fase === "votando" && v.eleitores.includes(usuario) && ["branco", "preto"].includes(dados.cor)) {
+    v.votos[usuario] = dados.cor;
+    if (v.eleitores.every((id) => v.votos[id])) return apurar();
+    return paraTodos("estado", estadoPublico());
+  }
+  if (acao === "encerrar" && v.fase === "votando" && podeComandar) return apurar();
+  if (acao === "decidir" && v.fase === "empate" && usuario === v.narrador && ["branco", "preto"].includes(dados.cor)) {
+    return concluir(dados.cor, true);
+  }
+  if (acao === "cancelar" && podeComandar) {
+    votoGM = null;
+    return paraTodos("cancelada", { id: v.id, por: usuario });
+  }
+}
+
+function apurar() {
+  const v = votoGM;
+  const p = placar(v);
+  if (p.branco === p.preto) {
+    v.fase = "empate";
+    return paraTodos("estado", { ...estadoPublico(), placar: p });
+  }
+  return concluir(p.branco > p.preto ? "branco" : "preto", false);
+}
+
+async function concluir(cor, desempate) {
+  const v = votoGM;
+  const p = placar(v);
+  votoGM = null;
+  paraTodos("resultado", { id: v.id, narrador: v.narrador, cor, placar: p, desempate });
+  if (ativo("mensagemChat")) {
+    const quem = esc(nomeUsuario(v.narrador));
+    const detalhe = desempate ? `empate ${p.branco} × ${p.preto}, ${quem} decidiu` : `${p.branco} branco × ${p.preto} preto`;
+    await ChatMessage.create({
+      speaker: { alias: "Fiasco" },
+      content: `<div class="fiasco-chat"><h3>Desfecho da cena de ${quem}</h3>
+        <div class="fiasco-chat-linha"><span class="fiasco-pip ${cor}">${cor === "branco" ? "B" : "P"}</span>
+        <b>${cor === "branco" ? "Dado branco: desfecho positivo" : "Dado preto: desfecho negativo"}</b></div>
+        <div class="fiasco-chat-linha"><small>${detalhe}</small></div></div>`
+    });
+  }
+}
+
+/** Jogador caiu ou entrou no meio da votação. */
+function aoConectar(user, conectado) {
+  const v = votoGM;
+  if (!v || !souCoordenador()) return;
+  if (!conectado) {
+    if (user.id === v.narrador) { votoGM = null; return paraTodos("cancelada", { id: v.id, por: null }); }
+    v.eleitores = v.eleitores.filter((id) => id !== user.id);
+    delete v.votos[user.id];
+    if (v.fase === "votando" && v.eleitores.length && v.eleitores.every((id) => v.votos[id])) return apurar();
+    if (!v.eleitores.length && v.fase === "votando") return apurar();
+  }
+  paraTodos("estado", { ...estadoPublico(), placar: v.fase === "empate" ? placar(v) : undefined });
+}
+
+/* --- Lado de todos ---------------------------------------------------- */
+
+function receberVoto(msg, remetente) {
+  if (msg?.tipo !== VOTO) return;
+  // O Foundry informa quem enviou; vale mais que o campo da mensagem
+  if (souCoordenador() && msg.usuario) return coordenar({ ...msg, usuario: remetente ?? msg.usuario });
+  if (msg.usuario) return; // pedido para o coordenador, não é comigo
+  const d = msg.dados;
+  if (msg.acao === "estado") {
+    votoAtual = { ...d, meuVoto: votoAtual?.id === d.id ? votoAtual.meuVoto : null };
+    return desenharPainel();
+  }
+  if (msg.acao === "cancelada") {
+    if (votoAtual?.id !== d.id) return;
+    votoAtual = null;
+    fecharPainel();
+    if (d.por && d.por !== game.user.id) ui.notifications.info(`Fiasco: votação cancelada por ${nomeUsuario(d.por)}.`);
+    return;
+  }
+  if (msg.acao === "resultado") {
+    votoAtual = null;
+    fecharPainel();
+    return mostrarDesfecho(d);
+  }
+}
+
+function fecharPainel() {
+  painelVoto?.remove();
+  painelVoto = null;
+}
+
+function desenharPainel() {
+  const v = votoAtual;
+  if (!v) return fecharPainel();
+  const eu = game.user.id;
+  const souNarrador = v.narrador === eu;
+  const souEleitor = v.eleitores.includes(eu);
+  const jaVotei = v.votaram.includes(eu);
+  const narrador = esc(nomeUsuario(v.narrador));
+  const progresso = `<div class="fiasco-voto-progresso">${v.votaram.length} de ${v.eleitores.length} votaram</div>`;
+  const botoes = (acao) => `
+    <div class="fiasco-voto-dados">
+      <button type="button" data-${acao}="branco" class="${v.meuVoto === "branco" ? "ativo" : ""}"><img src="${face("branco", 5)}" alt=""><span>Branco<small>positivo</small></span></button>
+      <button type="button" data-${acao}="preto" class="${v.meuVoto === "preto" ? "ativo" : ""}"><img src="${face("preto", 5)}" alt=""><span>Preto<small>negativo</small></span></button>
+    </div>`;
+
+  let corpo;
+  if (v.fase === "empate") {
+    const p = v.placar ?? { branco: 0, preto: 0 };
+    corpo = souNarrador
+      ? `<h3>Empate (${p.branco} × ${p.preto})</h3><p>Pela regra, o dono da cena decide. Qual dado você recebe?</p>${botoes("decidir")}`
+      : `<h3>Empate (${p.branco} × ${p.preto})</h3><p>${narrador} vai decidir o próprio dado.</p>`;
+  } else if (souEleitor) {
+    corpo = `<h3>Cena de ${narrador}</h3>
+      <p>${jaVotei ? "Voto registrado. Você ainda pode trocar." : `Qual dado ${narrador} recebe? Seu voto é secreto.`}</p>
+      ${botoes("votar")}${progresso}`;
+  } else if (souNarrador) {
+    corpo = `<h3>Seus amigos estão escolhendo o seu dado</h3><p>Continue narrando: o resultado aparece quando todos votarem.</p>${progresso}`;
+  } else {
+    corpo = `<h3>Votação: cena de ${narrador}</h3>${progresso}`;
+  }
+  const comandos = (souNarrador || game.user.isGM)
+    ? `<div class="fiasco-voto-comandos">
+        ${v.fase === "votando" ? `<button type="button" data-cmd="encerrar"><i class="fas fa-flag-checkered"></i> Encerrar agora</button>` : ""}
+        <button type="button" data-cmd="cancelar"><i class="fas fa-xmark"></i> Cancelar</button></div>`
+    : "";
+
+  if (!painelVoto) {
+    painelVoto = document.createElement("section");
+    painelVoto.id = "fiasco-painel-voto";
+    painelVoto.className = "fiasco-mesa";
+    document.body.append(painelVoto);
+    painelVoto.addEventListener("click", (ev) => {
+      const b = ev.target.closest("button");
+      if (!b || !votoAtual) return;
+      const id = votoAtual.id;
+      if (b.dataset.votar) {
+        votoAtual.meuVoto = b.dataset.votar;
+        paraCoordenador("votar", { id, cor: b.dataset.votar });
+        desenharPainel();
+      }
+      if (b.dataset.decidir) paraCoordenador("decidir", { id, cor: b.dataset.decidir });
+      if (b.dataset.cmd) paraCoordenador(b.dataset.cmd, { id });
+    });
+  }
+  painelVoto.innerHTML = `<div class="fiasco-voto-titulo"><i class="fas fa-scale-balanced"></i> Desfecho da cena</div>${corpo}${comandos}`;
+}
+
+/** Efeito na tela: o dado vencedor surge girando, com o recado do desfecho. */
+function mostrarDesfecho({ narrador, cor, placar: p, desempate }) {
+  document.getElementById("fiasco-desfecho")?.remove();
+  const el = document.createElement("div");
+  el.id = "fiasco-desfecho";
+  el.className = `fiasco-mesa ${cor}`;
+  const quem = esc(nomeUsuario(narrador));
+  const sub = desempate ? `Empate: ${quem} decidiu` : `${p.branco} branco × ${p.preto} preto`;
+  el.innerHTML = `
+    <div class="fiasco-desfecho-caixa">
+      <img src="${face(cor, 6)}" alt="">
+      <div class="fiasco-desfecho-texto">
+        <b>${cor === "branco" ? "Desfecho positivo" : "Desfecho negativo"}</b>
+        <span>Cena de ${quem} · dado ${cor}</span>
+        <small>${sub}</small>
+      </div>
+    </div>`;
+  document.body.append(el);
+  setTimeout(() => el.classList.add("saindo"), 3600);
+  setTimeout(() => el.remove(), 4300);
+}
+
+/** Abre a votação. Por padrão, quem chama é o narrador. */
+async function abrirVotacao(narrador = null) {
+  if (votoAtual) return ui.notifications.warn("Fiasco: já existe uma votação aberta.");
+  if (!gmAtivo()) return ui.notifications.warn("Fiasco: é preciso um GM conectado para a votação.");
+  if (!narrador) {
+    const opcoes = game.users.filter((u) => u.active)
+      .map((u) => `<option value="${u.id}" ${u.id === game.user.id ? "selected" : ""}>${esc(u.name)}</option>`).join("");
+    narrador = await DialogV2.wait({
+      window: { title: "Fiasco: Votar o desfecho" },
+      content: `<div class="fiasco-dialogo">
+        <label>Quem está narrando a cena? <select name="narrador">${opcoes}</select></label>
+        <p class="hint">Os outros jogadores votam em segredo: dado branco (positivo) ou preto (negativo). Use quando o narrador escolheu Estabelecer.</p>
+      </div>`,
+      buttons: [
+        { action: "ok", label: "Abrir votação", icon: "fas fa-scale-balanced", default: true, callback: (ev, btn) => btn.form.elements.narrador.value },
+        { action: "cancelar", label: "Cancelar" }
+      ],
+      rejectClose: false
+    });
+    if (!narrador || narrador === "cancelar") return;
+  }
+  paraCoordenador("abrir", { narrador });
+}
+
+/** Socket e conexões: no "ready". */
+function registrarVotacao() {
+  game.socket.on(SOCKET, receberVoto);
+  Hooks.on("userConnected", aoConectar);
+}
+
+/** Botão e atalho: no "init", antes de a barra de controles ser montada. */
+function registrarBotaoVotacao() {
+  game.keybindings.register(MOD, "votar", {
+    name: "Votar o desfecho da cena",
+    hint: "Abre a votação secreta do dado (branco ou preto) da cena.",
+    editable: [{ key: "KeyV", modifiers: ["Alt"] }],
+    onDown: () => { abrirVotacao(); return true; }
+  });
+  Hooks.on("getSceneControlButtons", (controls) => {
+    const tool = { name: "fiascoVotar", title: "Votar o desfecho da cena (Alt+V)", icon: "fas fa-scale-balanced", button: true };
+    if (Array.isArray(controls)) {
+      controls.find((c) => c.name === "token")?.tools.push({ ...tool, onClick: () => abrirVotacao() });
+    } else {
+      const grupo = controls.tokens ?? controls.token;
+      if (grupo?.tools) grupo.tools.fiascoVotar = { ...tool, order: Object.keys(grupo.tools).length + 1, onChange: () => abrirVotacao() };
+    }
   });
 }
 
@@ -984,14 +1344,16 @@ Hooks.once("init", () => {
   registrarHooksInterface();
   registrarFontes();
   if (ativo("escrever")) registrarModoEscrita();
+  if (ativo("votacao")) registrarBotaoVotacao();
 
-  const api = { alternarEscrita, escreverEm, redimensionarDados, criarJogador, dialogoCriarJogador, criarDados, dialogoCriarDados, rolarSelecionados, rolarTodos, rolarTokens, abrirMapa, importarPlayset, importarPacote, importarArquivo, dialogoImportar, definirFace };
+  const api = { abrirVotacao, alternarEscrita, escreverEm, redimensionarDados, criarJogador, dialogoCriarJogador, criarDados, dialogoCriarDados, rolarSelecionados, rolarTodos, rolarTokens, abrirMapa, importarPlayset, importarPacote, importarArquivo, dialogoImportar, definirFace };
   game.modules.get(MOD).api = api;
   globalThis.FiascoMesa = api;
 });
 
 Hooks.once("ready", () => {
   if (ativo("escrever")) registrarSocket();
+  if (ativo("votacao")) registrarVotacao();
   for (const f of Object.keys(FONTES_MESA)) carregarFonte(f);
 });
 
