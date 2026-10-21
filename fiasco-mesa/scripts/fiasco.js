@@ -738,7 +738,9 @@ function dadosDesenho({ texto, fonte, cor, tamanho, giro = 0, moldura = false, m
     text: texto, fontFamily: fonte, fontSize: tamanho, textColor: cor, textAlpha: 1,
     fillType: CONST.DRAWING_FILL_TYPES.NONE,
     strokeWidth: moldura ? Math.max(1, Number(molduraLargura) || 4) : 0,
-    strokeColor: molduraCor, strokeAlpha: moldura ? 1 : 0
+    strokeColor: molduraCor, strokeAlpha: moldura ? 1 : 0,
+    // Camada de interface: o texto fica por cima de tudo (dados, fichas e imagens), não atrás.
+    interface: true
   };
 }
 
@@ -765,7 +767,7 @@ function pedirAoGM(acao, dados) {
   game.socket.emit(SOCKET, { acao, dados, usuario: game.user.id, cena: canvas.scene.id });
 }
 
-const CAMPOS_TEXTO = ["x", "y", "shape", "rotation", "text", "fontFamily", "fontSize", "textColor", "textAlpha", "fillType", "strokeWidth", "strokeColor", "strokeAlpha"];
+const CAMPOS_TEXTO = ["x", "y", "shape", "rotation", "text", "fontFamily", "fontSize", "textColor", "textAlpha", "fillType", "strokeWidth", "strokeColor", "strokeAlpha", "interface"];
 const filtrar = (d) => Object.fromEntries(CAMPOS_TEXTO.filter((k) => k in d).map((k) => [k, d[k]]));
 
 function registrarSocket() {
@@ -1375,6 +1377,15 @@ Hooks.once("ready", () => {
   if (ativo("escrever")) registrarSocket();
   if (ativo("votacao")) registrarVotacao();
   for (const f of Object.keys(FONTES_MESA)) carregarFonte(f);
+});
+
+/* Ao abrir o mundo, o GM traz para a frente os textos antigos que ficaram atrás das imagens. */
+Hooks.once("ready", async () => {
+  if (!game.user.isGM || gmAtivo()?.id !== game.user.id) return;
+  for (const scene of game.scenes) {
+    const atras = scene.drawings.filter((d) => ehTexto(d) && !d.interface).map((d) => ({ _id: d.id, interface: true }));
+    if (atras.length) await scene.updateEmbeddedDocuments("Drawing", atras);
+  }
 });
 
 /* Ao abrir o mundo, o GM ajusta dados com tamanho diferente do configurado. */

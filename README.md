@@ -33,6 +33,8 @@ Módulo para jogar Fiasco Classic no Foundry VTT (v12 e v13), em qualquer sistem
 2. Clique na mesa onde quer escrever. Abre uma janela com o texto, a **fonte**, a **cor** e o **tamanho**, com prévia ao vivo.
 3. Clique em **Escrever**. O texto aparece para todos e fica salvo na cena.
 
+O texto fica sempre **por cima** de tudo na mesa: dados, fichas e imagens.
+
 Para **editar ou apagar**, ligue a caneta de novo e clique em cima do texto. Cada jogador edita os próprios textos; o GM edita todos. **Esc** cancela.
 
 O módulo traz cinco fontes: Máquina de escrever (Special Elite), Caneta pincel (Permanent Marker), Letra de mão (Caveat), Cartaz (Alfa Slab One) e Faroeste (Rye). As fontes do Foundry e as que você adicionou também aparecem na lista. A janela lembra a última fonte, cor e tamanho que você usou.
