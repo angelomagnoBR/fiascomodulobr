@@ -41,11 +41,14 @@ Jogadores sem permissão de desenhar também podem escrever: o texto é criado p
 
 ## Votação do desfecho
 Quando o narrador escolhe **Estabelecer**, os outros decidem o dado da cena. Pelo livro é por consenso; aqui vira voto secreto.
-1. Clique na **balança** nos controles de Token (ou **Alt+V**) e escolha quem está narrando.
+1. Clique na **balança** nos controles de Token (ou **Alt+V**), escolha quem está narrando e marque **quem vota**. Desmarque quem só assiste (usuários de transmissão): a escolha fica guardada para as próximas votações.
 2. Os outros jogadores votam em **Branco** (positivo) ou **Preto** (negativo). Ninguém vê o voto de ninguém; aparece só quantos já votaram.
 3. Quando todos votam, o resultado aparece na tela de todo mundo e no chat. Aí é só arrastar um dado daquela cor.
-4. **Empate**: pela regra (p. 32), o dono da cena decide. O narrador recebe os dois botões.
+4. **Empate**: pela regra (p. 32), o dono da cena decide. O painel dele volta para o centro, pisca em dourado com **VOCÊ DECIDE!** e toca um aviso.
 5. O narrador ou o GM podem **Encerrar agora** (conta os votos que já chegaram) ou **Cancelar**.
+6. O painel abre no meio da tela e pode ser **arrastado pela barra do título**. Cada um tem a sua posição guardada.
+
+Quem não vota nem narra (ex.: usuário de transmissão) não vê o painel, só o efeito do resultado. O efeito não escurece a tela, para não estragar o chroma key das câmeras no OBS.
 
 Precisa de um GM conectado (ele faz a contagem). Em *Configurar Módulos* dá para desligar a votação ou fazer o GM não votar (**Mestre também vota**).
 

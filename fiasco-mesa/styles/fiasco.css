@@ -174,14 +174,41 @@ body.fiasco-escrevendo #board { cursor: crosshair !important; }
 
 /* Votação do desfecho: painel */
 #fiasco-painel-voto {
-  position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 90;
+  position: fixed; top: 40%; left: 40%; z-index: 90;
   width: min(360px, calc(100vw - 32px)); padding: 10px 14px 12px;
   background: rgba(24, 20, 16, .95); color: #efe5cf; border: 1px solid #e8a92e; border-radius: 8px;
   box-shadow: 0 6px 22px rgba(0, 0, 0, .6); font-family: "Signika", sans-serif; text-align: center;
 }
 #fiasco-painel-voto h3 { margin: 6px 0 4px; border: none; font-size: 17px; color: #fff; }
 #fiasco-painel-voto p { margin: 0 0 8px; font-size: 13px; color: #d7cbb3; }
-.fiasco-voto-titulo { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #e8a92e; }
+.fiasco-voto-titulo {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #e8a92e;
+  margin: -10px -14px 6px; padding: 7px 14px; border-bottom: 1px solid rgba(232, 169, 46, .25);
+  cursor: grab; user-select: none; display: flex; justify-content: space-between; align-items: center;
+}
+#fiasco-painel-voto.arrastando, #fiasco-painel-voto.arrastando .fiasco-voto-titulo { cursor: grabbing; }
+
+/* Empate: o narrador precisa decidir */
+#fiasco-painel-voto.decidir {
+  border: 2px solid #ffd36b; width: min(400px, calc(100vw - 32px));
+  animation: fiasco-pulso 1.2s ease-in-out infinite;
+}
+.fiasco-voto-decide {
+  font-family: "Alfa Slab One", "Signika", sans-serif; font-size: 30px; text-transform: uppercase;
+  color: #ffd36b; letter-spacing: .03em; margin: 4px 0 2px;
+}
+#fiasco-painel-voto.decidir p { color: #fff; font-size: 14px; }
+#fiasco-painel-voto.decidir .fiasco-voto-dados button { border-color: #ffd36b; }
+@keyframes fiasco-pulso {
+  0%, 100% { box-shadow: 0 6px 22px rgba(0, 0, 0, .6), 0 0 0 0 rgba(255, 211, 107, .7); }
+  50% { box-shadow: 0 6px 22px rgba(0, 0, 0, .6), 0 0 22px 6px rgba(255, 211, 107, .55); }
+}
+
+/* Janela de abrir a votação */
+.fiasco-abrir-voto fieldset { border: 1px solid rgba(0, 0, 0, .2); border-radius: 6px; padding: 6px 10px; margin: 0; }
+.fiasco-eleitores { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; }
+.fiasco-eleitor { display: flex !important; flex-direction: row !important; align-items: center; gap: 6px; }
+.fiasco-eleitor.narrador { opacity: .45; text-decoration: line-through; }
 .fiasco-voto-dados { display: flex; gap: 10px; justify-content: center; }
 .fiasco-voto-dados button {
   flex: 1; display: flex; align-items: center; gap: 8px; margin: 0; padding: 6px 8px;
@@ -200,7 +227,8 @@ body.fiasco-escrevendo #board { cursor: crosshair !important; }
 #fiasco-desfecho {
   position: fixed; inset: 0; z-index: 95; pointer-events: none;
   display: flex; align-items: center; justify-content: center;
-  background: radial-gradient(ellipse at center, rgba(0, 0, 0, .55) 0%, rgba(0, 0, 0, 0) 65%);
+  /* Sem fundo escurecido: um véu semitransparente tinge o rosa do chroma key e o OBS deixa de recortar as câmeras. */
+  background: none;
   animation: fiasco-fundo-in .35s ease-out both;
 }
 #fiasco-desfecho.saindo { animation: fiasco-fundo-out .6s ease-in both; }
@@ -209,17 +237,18 @@ body.fiasco-escrevendo #board { cursor: crosshair !important; }
   width: 170px; height: 170px; border: none;
   animation: fiasco-dado-cai .9s cubic-bezier(.2, 1.4, .4, 1) both;
 }
-#fiasco-desfecho.branco img { filter: drop-shadow(0 0 28px rgba(255, 246, 214, .95)); }
-#fiasco-desfecho.preto img { filter: drop-shadow(0 0 28px rgba(208, 52, 44, .95)); }
+#fiasco-desfecho.branco img { filter: drop-shadow(0 0 14px rgba(255, 246, 214, .95)); }
+#fiasco-desfecho.preto img { filter: drop-shadow(0 0 14px rgba(208, 52, 44, .95)); }
 .fiasco-desfecho-texto { display: flex; flex-direction: column; align-items: center; animation: fiasco-texto-in .5s .45s ease-out both; }
 .fiasco-desfecho-texto b {
   font-family: "Alfa Slab One", "Signika", sans-serif; font-size: 52px; text-transform: uppercase; letter-spacing: .03em;
-  text-shadow: 0 3px 12px rgba(0, 0, 0, .8);
+  -webkit-text-stroke: 2px #140f0b; paint-order: stroke fill;
+  text-shadow: 0 2px 0 #140f0b, 0 3px 6px rgba(0, 0, 0, .7);
 }
 #fiasco-desfecho.branco .fiasco-desfecho-texto b { color: #fff6d6; }
 #fiasco-desfecho.preto .fiasco-desfecho-texto b { color: #e0473e; }
-.fiasco-desfecho-texto span { font-size: 20px; color: #efe5cf; text-shadow: 0 2px 6px rgba(0, 0, 0, .9); }
-.fiasco-desfecho-texto small { font-size: 14px; color: #cbbfa6; text-shadow: 0 2px 6px rgba(0, 0, 0, .9); }
+.fiasco-desfecho-texto span { font-size: 20px; color: #efe5cf; -webkit-text-stroke: 1px #140f0b; paint-order: stroke fill; text-shadow: 0 2px 3px rgba(0, 0, 0, .9); }
+.fiasco-desfecho-texto small { font-size: 14px; color: #cbbfa6; text-shadow: 0 1px 2px #000, 0 2px 4px rgba(0, 0, 0, .9); }
 
 @keyframes fiasco-dado-cai {
   0% { transform: translateY(-60vh) rotate(-540deg) scale(.6); opacity: 0; }

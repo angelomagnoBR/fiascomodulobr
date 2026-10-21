@@ -49,6 +49,8 @@ function registrarConfiguracoes() {
       ...(o.onChange ? { onChange: o.onChange } : {})
     });
   }
+  game.settings.register(MOD, "naoVotam", { scope: "world", config: false, type: Array, default: [] });
+  game.settings.register(MOD, "posPainelVoto", { scope: "client", config: false, type: Object, default: {} });
   game.settings.register(MOD, "ultimaEscrita", { scope: "client", config: false, type: Object, default: { ...PADRAO_ESCRITA } });
 }
 
@@ -1016,6 +1018,12 @@ let votoAtual = null; // o que este cliente sabe da votação aberta
 let painelVoto = null;
 
 const nomeUsuario = (id) => game.users.get(id)?.name ?? "?";
+/** Padrão da caixinha "vota": fora quem ficou desmarcado da última vez (e o GM, se "Mestre também vota" estiver desligado). */
+function naoVota(u) {
+  let fora = [];
+  try { fora = game.settings.get(MOD, "naoVotam") ?? []; } catch { /* sem registro ainda */ }
+  return fora.includes(u.id) || (u.isGM && !ativo("gmVota"));
+}
 const souCoordenador = () => game.user.isGM && gmAtivo()?.id === game.user.id;
 
 /** Mensagem para o GM coordenador (ou processa aqui, se eu for ele). */
@@ -1052,7 +1060,15 @@ function coordenar(msg) {
   if (acao === "abrir") {
     if (v) return;
     const narrador = dados.narrador;
-    const eleitores = game.users.filter((u) => u.active && u.id !== narrador && (ativo("gmVota") || !u.isGM)).map((u) => u.id);
+    const escolhidos = Array.isArray(dados.eleitores)
+      ? dados.eleitores
+      : game.users.filter((u) => !naoVota(u)).map((u) => u.id);
+    const eleitores = escolhidos.filter((id) => id !== narrador && game.users.get(id)?.active);
+    if (Array.isArray(dados.eleitores)) {
+      // Lembra quem ficou de fora (ex.: usuários de transmissão) para a próxima vez
+      const fora = game.users.filter((u) => u.active && u.id !== narrador && !dados.eleitores.includes(u.id)).map((u) => u.id);
+      game.settings.set(MOD, "naoVotam", fora).catch(() => {});
+    }
     if (!eleitores.length) {
       const aviso = "Fiasco: ninguém conectado para votar.";
       if (usuario === game.user.id) ui.notifications.warn(aviso);
@@ -1167,12 +1183,17 @@ function desenharPainel() {
       <button type="button" data-${acao}="preto" class="${v.meuVoto === "preto" ? "ativo" : ""}"><img src="${face("preto", 5)}" alt=""><span>Preto<small>negativo</small></span></button>
     </div>`;
 
+  // Quem só assiste (ex.: usuário de transmissão) não vê o painel, só o efeito do resultado
+  if (!souNarrador && !souEleitor && !game.user.isGM) return fecharPainel();
+
+  const decidir = v.fase === "empate" && souNarrador;
   let corpo;
   if (v.fase === "empate") {
     const p = v.placar ?? { branco: 0, preto: 0 };
     corpo = souNarrador
-      ? `<h3>Empate (${p.branco} × ${p.preto})</h3><p>Pela regra, o dono da cena decide. Qual dado você recebe?</p>${botoes("decidir")}`
-      : `<h3>Empate (${p.branco} × ${p.preto})</h3><p>${narrador} vai decidir o próprio dado.</p>`;
+      ? `<div class="fiasco-voto-decide">Você decide!</div>
+         <p>Deu empate (${p.branco} × ${p.preto}). Pela regra, o dono da cena desempata: escolha o seu dado.</p>${botoes("decidir")}`
+      : `<h3>Empate (${p.branco} × ${p.preto})</h3><p>Aguardando ${narrador} decidir o próprio dado…</p>`;
   } else if (souEleitor) {
     corpo = `<h3>Cena de ${narrador}</h3>
       <p>${jaVotei ? "Voto registrado. Você ainda pode trocar." : `Qual dado ${narrador} recebe? Seu voto é secreto.`}</p>
@@ -1188,11 +1209,13 @@ function desenharPainel() {
         <button type="button" data-cmd="cancelar"><i class="fas fa-xmark"></i> Cancelar</button></div>`
     : "";
 
-  if (!painelVoto) {
+  const novo = !painelVoto;
+  if (novo) {
     painelVoto = document.createElement("section");
     painelVoto.id = "fiasco-painel-voto";
     painelVoto.className = "fiasco-mesa";
     document.body.append(painelVoto);
+    arrastarPainel(painelVoto);
     painelVoto.addEventListener("click", (ev) => {
       const b = ev.target.closest("button");
       if (!b || !votoAtual) return;
@@ -1206,7 +1229,51 @@ function desenharPainel() {
       if (b.dataset.cmd) paraCoordenador(b.dataset.cmd, { id });
     });
   }
-  painelVoto.innerHTML = `<div class="fiasco-voto-titulo"><i class="fas fa-scale-balanced"></i> Desfecho da cena</div>${corpo}${comandos}`;
+  painelVoto.innerHTML = `<div class="fiasco-voto-titulo" title="Arraste para mover"><i class="fas fa-grip-lines"></i> Desfecho da cena <i class="fas fa-scale-balanced"></i></div>${corpo}${comandos}`;
+
+  const jaDecidia = painelVoto.classList.contains("decidir");
+  painelVoto.classList.toggle("decidir", decidir);
+  if (novo) posicionarPainel();
+  if (decidir && !jaDecidia) {
+    posicionarPainel(true); // volta para o centro, para não passar despercebido
+    ui.notifications.info("Fiasco: empate! Você decide o dado da sua cena.");
+    try { (foundry.audio?.AudioHelper ?? globalThis.AudioHelper)?.play({ src: "sounds/notify.wav", volume: 0.8, autoplay: true, loop: false }, false); } catch { /* sem som */ }
+  }
+}
+
+/** Centro da tela, ou a posição que este usuário escolheu da última vez. */
+function posicionarPainel(centro = false) {
+  if (!painelVoto) return;
+  let pos = {};
+  try { pos = game.settings.get(MOD, "posPainelVoto") ?? {}; } catch { /* padrão */ }
+  const usarSalva = !centro && Number.isFinite(pos.left) && Number.isFinite(pos.top);
+  const w = painelVoto.offsetWidth || 360, h = painelVoto.offsetHeight || 220;
+  const left = usarSalva ? pos.left : (window.innerWidth - w) / 2;
+  const top = usarSalva ? pos.top : (window.innerHeight - h) / 2;
+  painelVoto.style.left = `${Math.max(0, Math.min(left, window.innerWidth - w))}px`;
+  painelVoto.style.top = `${Math.max(0, Math.min(top, window.innerHeight - 40))}px`;
+}
+
+/** Arrastar o painel pela barra de título; a posição fica guardada para este usuário. */
+function arrastarPainel(el) {
+  el.addEventListener("pointerdown", (ev) => {
+    if (ev.button !== 0 || !ev.target.closest(".fiasco-voto-titulo")) return;
+    ev.preventDefault();
+    const ox = ev.clientX - el.offsetLeft, oy = ev.clientY - el.offsetTop;
+    el.classList.add("arrastando");
+    const mover = (e) => {
+      el.style.left = `${Math.max(0, Math.min(e.clientX - ox, window.innerWidth - el.offsetWidth))}px`;
+      el.style.top = `${Math.max(0, Math.min(e.clientY - oy, window.innerHeight - 40))}px`;
+    };
+    const soltar = () => {
+      el.classList.remove("arrastando");
+      window.removeEventListener("pointermove", mover);
+      window.removeEventListener("pointerup", soltar);
+      game.settings.set(MOD, "posPainelVoto", { left: el.offsetLeft, top: el.offsetTop }).catch(() => {});
+    };
+    window.addEventListener("pointermove", mover);
+    window.addEventListener("pointerup", soltar);
+  });
 }
 
 /** Efeito na tela: o dado vencedor surge girando, com o recado do desfecho. */
@@ -1232,27 +1299,51 @@ function mostrarDesfecho({ narrador, cor, placar: p, desempate }) {
 }
 
 /** Abre a votação. Por padrão, quem chama é o narrador. */
-async function abrirVotacao(narrador = null) {
+async function abrirVotacao(narrador = null, eleitores = undefined) {
   if (votoAtual) return ui.notifications.warn("Fiasco: já existe uma votação aberta.");
   if (!gmAtivo()) return ui.notifications.warn("Fiasco: é preciso um GM conectado para a votação.");
   if (!narrador) {
-    const opcoes = game.users.filter((u) => u.active)
+    const ativos = game.users.filter((u) => u.active);
+    const opcoes = ativos
       .map((u) => `<option value="${u.id}" ${u.id === game.user.id ? "selected" : ""}>${esc(u.name)}</option>`).join("");
-    narrador = await DialogV2.wait({
+    const caixas = ativos
+      .map((u) => `<label class="fiasco-eleitor" data-user="${u.id}"><input type="checkbox" name="vota" value="${u.id}" ${naoVota(u) ? "" : "checked"}> ${esc(u.name)}${u.isGM ? " <small>(GM)</small>" : ""}</label>`).join("");
+    const res = await DialogV2.wait({
       window: { title: "Fiasco: Votar o desfecho" },
-      content: `<div class="fiasco-dialogo">
+      position: { width: 400 },
+      content: `<div class="fiasco-dialogo fiasco-abrir-voto">
         <label>Quem está narrando a cena? <select name="narrador">${opcoes}</select></label>
-        <p class="hint">Os outros jogadores votam em segredo: dado branco (positivo) ou preto (negativo). Use quando o narrador escolheu Estabelecer.</p>
+        <fieldset><legend>Quem vota</legend><div class="fiasco-eleitores">${caixas}</div></fieldset>
+        <p class="hint">Desmarque quem só assiste, como os usuários de transmissão. A escolha fica guardada para a próxima vez. O narrador nunca vota na própria cena.</p>
       </div>`,
       buttons: [
-        { action: "ok", label: "Abrir votação", icon: "fas fa-scale-balanced", default: true, callback: (ev, btn) => btn.form.elements.narrador.value },
+        { action: "ok", label: "Abrir votação", icon: "fas fa-scale-balanced", default: true,
+          callback: (ev, btn) => ({
+            narrador: btn.form.elements.narrador.value,
+            eleitores: [...btn.form.querySelectorAll("input[name='vota']:checked")].map((i) => i.value)
+          }) },
         { action: "cancelar", label: "Cancelar" }
       ],
-      rejectClose: false
+      rejectClose: false,
+      render: (event, arg) => {
+        const root = arg instanceof HTMLElement ? arg : arg?.element;
+        const sel = root?.querySelector("select[name='narrador']");
+        if (!sel) return;
+        const marcarNarrador = () => root.querySelectorAll(".fiasco-eleitor").forEach((l) => {
+          const ehNarrador = l.dataset.user === sel.value;
+          l.classList.toggle("narrador", ehNarrador);
+          l.querySelector("input").disabled = ehNarrador;
+        });
+        sel.addEventListener("change", marcarNarrador);
+        marcarNarrador();
+      }
     });
-    if (!narrador || narrador === "cancelar") return;
+    if (!res || typeof res !== "object") return;
+    narrador = res.narrador;
+    eleitores = res.eleitores.filter((id) => id !== narrador);
+    if (!eleitores.length) return ui.notifications.warn("Fiasco: marque pelo menos uma pessoa para votar.");
   }
-  paraCoordenador("abrir", { narrador });
+  paraCoordenador("abrir", { narrador, eleitores });
 }
 
 /** Socket e conexões: no "ready". */
