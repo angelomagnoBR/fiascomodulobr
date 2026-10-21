@@ -74,7 +74,11 @@ FiascoMesa.alternarEscrita();     // liga/desliga o modo de escrever na mesa
 Coloque suas 12 imagens em qualquer pasta, com nomes `branco-1.png` … `preto-6.png`, e mude **Imagens das faces** nas configurações. Exemplo: `worlds/meu-mundo/dados/{cor}-{valor}.png`.
 
 ## Cenários (playsets)
-O botão **Importar Cenário** lê um arquivo `.json` e cria:
+O botão **Importar Cenário** tem duas formas:
+- **Cenários que vêm com o módulo**: escolha na lista e importe direto. Hoje: **Cangaço** (sertão, 1930), com Virada própria. Texto original, feito para este módulo.
+- **Arquivo do seu computador**: um `.json` de Cenário ou de pacote.
+
+Em qualquer caso, ele cria:
 - um **Diário** com Visão geral, as 4 tabelas e a Preparação rápida;
 - 4 **Tabelas de Rolagem** (Relações, Necessidades, Locações, Objetos), cada uma com 36 resultados. A fórmula `(1d6 - 1) * 6 + 1d6` sorteia Categoria e Elemento de uma vez.
 

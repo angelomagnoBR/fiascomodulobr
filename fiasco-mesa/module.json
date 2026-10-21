@@ -2,7 +2,7 @@
   "id": "fiasco-mesa",
   "title": "Fiasco: Mesa",
   "description": "Mesa de Fiasco Classic para qualquer sistema: ficha de jogador com mapa de relações, ficha de dado (token arrastável, branco/preto), criação do pool de dados com Dice So Nice e importador de Cenários (Diário + Tabelas de Rolagem). Também permite escrever na mesa com fonte e cor à escolha, visível para todos. Cada parte pode ser ligada ou desligada nas configurações.",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "compatibility": {
     "minimum": "12",
     "verified": "13"

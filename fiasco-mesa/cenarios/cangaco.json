@@ -1,0 +1,442 @@
+{
+  "formato": "fiasco-mesa-playset-1",
+  "titulo": "Cangaço",
+  "subtitulo": "...na vila de Serra Branca, sertão, 1930",
+  "introducao": "Sertão do Nordeste, por volta de 1930. A seca castiga, o coronel manda, a volante caça e o bando passa. Entre um e outro, gente comum com fome, fé e pouca paciência tenta sair por cima. Não vai sair.\n\nO cangaço foi o banditismo armado e nômade que tomou o sertão do fim do século XIX até 1940. Os bandos viviam em movimento pela caatinga, cobravam 'contribuição' de fazendeiros por carta, saqueavam vilas, cumpriam vinganças de sangue e faziam alianças que mudavam com o vento. O maior nome foi Virgulino Ferreira, o Lampião, morto com Maria Bonita e parte do bando na Grota de Angico, em Sergipe, em 1938. Com a morte de Corisco, em 1940, o cangaço acabou.\n\nQuem é quem: o coronel é o fazendeiro dono da política local. O coiteiro esconde e abastece o bando, por medo ou por lucro. A volante é a tropa da polícia que caça cangaceiros — que chamam os soldados de 'macacos'. O jagunço é pistoleiro a soldo de um coronel. O beato e os romeiros são a fé popular, com Juazeiro e o 'Padim Ciço' no centro.\n\nO visual é parte da lenda: chapéu de couro em meia-lua com estrelas de metal, bornais bordados, cartucheiras cruzadas, punhal comprido, anéis em todos os dedos. À noite, xaxado.\n\nOs personagens, o bando e a vila de Serra Branca são inventados. Lampião, Maria Bonita e Padre Cícero ficam no pano de fundo, como lenda, cordel e santinho na parede.",
+  "regrasEspeciais": [
+    "Quem começa a Preparação é quem tiver o apelido mais cangaceiro. Na dúvida, quem souber um passo de xaxado.",
+    "Este Cenário tem Virada própria (Virada do Cangaço). Usem ela no lugar da Virada do livro, se quiserem.",
+    "Na Conclusão, cada jogador termina dizendo o título do folheto de cordel que contaria a história do seu personagem."
+  ],
+  "movieNight": "O Cangaceiro (1953), Deus e o Diabo na Terra do Sol (1964), O Dragão da Maldade contra o Santo Guerreiro (1969), Baile Perfumado (1996), Corisco e Dadá (1996), O Auto da Compadecida (2000), Bacurau (2019).",
+  "creditos": "Cenário Cangaço: texto original criado para o módulo Fiasco: Mesa (Angelo Magno), seguindo a estrutura do Cenário Boomtown. Fiasco © Jason Morningstar / Bully Pulpit Games; edição em português © RetroPunk Publicações.",
+  "tabelas": [
+    {
+      "nome": "Relações",
+      "categorias": [
+        {
+          "nome": "Família",
+          "itens": [
+            "Compadre e comadre (um batizou o filho do outro)",
+            "Padrinho e afilhado",
+            "Irmãos de pai, não de mãe",
+            "Pai e o filho que fugiu de casa",
+            "Tio e o sobrinho que ele criou como filho",
+            "Irmãos de leite (mamaram na mesma ama)"
+          ]
+        },
+        {
+          "nome": "Lida no sertão",
+          "itens": [
+            "Vaqueiro e fazendeiro",
+            "Tropeiro e comprador de couro",
+            "Rendeira e freguesa",
+            "Mascate e freguês que só compra fiado",
+            "Ferreiro e quem encomendou a arma",
+            "Boticário (ou rábula) e cliente"
+          ]
+        },
+        {
+          "nome": "O Passado",
+          "itens": [
+            "Sobreviventes da seca do Quinze",
+            "Ex-cangaceiro e ex-soldado da volante",
+            "Criados juntos no mesmo sítio",
+            "Testemunhas do mesmo crime",
+            "Já foram noivos da mesma moça",
+            "Famílias em guerra de sangue há três gerações"
+          ]
+        },
+        {
+          "nome": "Romance",
+          "itens": [
+            "Marido e mulher",
+            "Ex-noivos",
+            "A moça que fugiu com o bando e quem ficou para trás",
+            "Namoro escondido do pai dela",
+            "Paixão de uma noite de forró",
+            "Casamento prometido a Santo Antônio"
+          ]
+        },
+        {
+          "nome": "Cangaço",
+          "itens": [
+            "Chefe do bando e cabra de confiança",
+            "Cangaceiro e coiteiro",
+            "Cangaceiro e soldado da volante disfarçado",
+            "Jagunço e o coronel que paga",
+            "Contrabandista de munição e comprador",
+            "Cangaceiro e o fotógrafo que quer o retrato do bando"
+          ]
+        },
+        {
+          "nome": "O Poder",
+          "itens": [
+            "Coronel e afilhado político",
+            "Delegado e seu soldado",
+            "Beato e devoto",
+            "Juiz e escrivão do cartório",
+            "Cobrador de impostos e comerciante",
+            "Padre da matriz e sacristão"
+          ]
+        }
+      ]
+    },
+    {
+      "nome": "Necessidades",
+      "categorias": [
+        {
+          "nome": "Se livrar",
+          "itens": [
+            "…do sertão, antes que a próxima seca chegue",
+            "…da dívida no barracão do coronel",
+            "…de uma promessa ao santo que não dá para cumprir",
+            "…do bando, sem levar bala nas costas",
+            "…de um casamento arranjado pela família",
+            "…do apelido que te deram"
+          ]
+        },
+        {
+          "nome": "Acertar as contas",
+          "itens": [
+            "…com a família que matou seu pai",
+            "…com o coronel que tomou sua terra",
+            "…com a volante que queimou seu sítio",
+            "…com o coiteiro que te entregou",
+            "…com um cabra do próprio bando",
+            "…com o compadre, por uma coisa que ninguém lembra direito"
+          ]
+        },
+        {
+          "nome": "Enriquecer",
+          "itens": [
+            "…saqueando a vila em dia de feira",
+            "…cobrando 'contribuição' dos fazendeiros",
+            "…sequestrando o filho do coronel",
+            "…vendendo o esconderijo do bando para a polícia",
+            "…com o ouro que o chefe enterrou",
+            "…com a recompensa pela cabeça de alguém desta mesa"
+          ]
+        },
+        {
+          "nome": "Conquistar o respeito",
+          "itens": [
+            "…do chefe do bando, fazendo o serviço sujo",
+            "…da vila, mostrando quem manda agora",
+            "…da moça, voltando com um chapéu cheio de estrelas",
+            "…do coronel, entregando um amigo",
+            "…da família, lavando o nome com sangue",
+            "…do sertão inteiro, virando história de cordel"
+          ]
+        },
+        {
+          "nome": "Fugir",
+          "itens": [
+            "…da volante, que está a um dia de distância",
+            "…depois de matar o homem errado",
+            "…da seca, com o que der para carregar",
+            "…de uma moça e dos sete irmãos dela",
+            "…mudando de nome, de terra e de santo",
+            "…com o dinheiro do bando"
+          ]
+        },
+        {
+          "nome": "Transar",
+          "itens": [
+            "…com a mulher do chefe, sabendo o preço",
+            "…na noite de São João, longe dos olhos da família",
+            "…com o soldado da volante, por amor ou por estratégia",
+            "…para provar a todos que ainda é de respeito",
+            "…antes de entrar no bando e nunca mais voltar",
+            "…para esquecer quem morreu ontem"
+          ]
+        }
+      ]
+    },
+    {
+      "nome": "Locações",
+      "categorias": [
+        {
+          "nome": "Casas do sertão",
+          "itens": [
+            "Tapera de taipa com o teto caindo",
+            "Casa-grande da fazenda Boa Esperança",
+            "Rancho do vaqueiro na beira do curral",
+            "Casa do coiteiro, com um quarto que ninguém usa",
+            "Sobrado do comerciante, na praça",
+            "Quarto alugado na pensão de Dona Zefa"
+          ]
+        },
+        {
+          "nome": "A vila de Serra Branca",
+          "itens": [
+            "Feira de sábado",
+            "Bodega do Seu Tonho: cachaça, fumo e fiado",
+            "Cadeia de uma cela só",
+            "Igreja Matriz de Nossa Senhora das Dores",
+            "Barbearia, onde se sabe de tudo",
+            "Cartório, com o livro de registros"
+          ]
+        },
+        {
+          "nome": "A fazenda do coronel",
+          "itens": [
+            "Alpendre da casa-grande",
+            "Açude quase seco",
+            "Barracão, onde todo mundo deve",
+            "Capela particular da família",
+            "Escritório com o cofre de ferro",
+            "Curral de gado marcado"
+          ]
+        },
+        {
+          "nome": "A estrada",
+          "itens": [
+            "Estação do trem",
+            "Barca para atravessar o São Francisco",
+            "Posto da volante",
+            "Cemitério de cruzes de pau",
+            "Cruzeiro na encruzilhada",
+            "Ponte velha sobre o riacho seco"
+          ]
+        },
+        {
+          "nome": "A caatinga",
+          "itens": [
+            "Raso da Catarina",
+            "Grota funda, com água de chuva",
+            "Coito do bando",
+            "Sombra do umbuzeiro",
+            "Caverna na serra",
+            "Cacimba que ainda tem água"
+          ]
+        },
+        {
+          "nome": "Fé e festa",
+          "itens": [
+            "Romaria em Juazeiro",
+            "Latada de forró",
+            "Fogueira de São João",
+            "Casa de farinha em dia de farinhada",
+            "Terreiro da rezadeira",
+            "Procissão com o andor do santo"
+          ]
+        }
+      ]
+    },
+    {
+      "nome": "Objetos",
+      "categorias": [
+        {
+          "nome": "Impróprios",
+          "itens": [
+            "Oração de corpo fechado costurada no bornal",
+            "Retrato posado do bando, com todos os rostos à mostra",
+            "Bilhete do coronel encomendando uma morte",
+            "Garrafa de cachaça com uma cobra dentro",
+            "Dente de ouro arrancado de alguém",
+            "Baralho marcado"
+          ]
+        },
+        {
+          "nome": "Transporte",
+          "itens": [
+            "Burro de carga teimoso",
+            "Cavalo baio roubado da fazenda",
+            "Caminhão Ford com a carroceria cheia de sacos",
+            "Vagão do trem",
+            "Canoa no São Francisco",
+            "Alpercata de couro (vai a pé mesmo)"
+          ]
+        },
+        {
+          "nome": "Arma",
+          "itens": [
+            "Punhal de três palmos",
+            "Mosquetão Mauser da polícia",
+            "Rifle papo-amarelo",
+            "Pistola Parabellum",
+            "Faca peixeira",
+            "Cartucheira cheia de bala"
+          ]
+        },
+        {
+          "nome": "Informação",
+          "itens": [
+            "Carta do bando exigindo dinheiro do fazendeiro",
+            "Lista dos coiteiros da região",
+            "Mapa do coito, desenhado a carvão",
+            "Telegrama avisando a volante",
+            "Cordel que conta a história errada (ou a certa)",
+            "Confissão feita ao padre, ouvida atrás da porta"
+          ]
+        },
+        {
+          "nome": "Objetos de valor",
+          "itens": [
+            "Bornal bordado cheio de moedas de ouro",
+            "Anéis para os dez dedos",
+            "Chapéu de couro com estrelas de prata",
+            "Escritura das terras do coronel",
+            "Recompensa em contos de réis",
+            "Gado marcado com o ferro de outro dono"
+          ]
+        },
+        {
+          "nome": "Sentimental",
+          "itens": [
+            "Bebê recém-nascido",
+            "Lenço de seda bordado com iniciais",
+            "Santinho do Padim Ciço",
+            "Carta de amor que ninguém sabe ler",
+            "Sanfona de oito baixos do falecido",
+            "Mecha de cabelo guardada numa caixinha"
+          ]
+        }
+      ]
+    },
+    {
+      "nome": "Virada do Cangaço",
+      "categorias": [
+        {
+          "nome": "A volante",
+          "itens": [
+            "A volante chega na vila",
+            "Um soldado reconhece um rosto",
+            "O tenente oferece perdão a quem entregar o chefe",
+            "Fogo no coito",
+            "Cerco ao amanhecer",
+            "Tem um 'macaco' entre vocês"
+          ]
+        },
+        {
+          "nome": "Traição",
+          "itens": [
+            "O coiteiro abre o bico",
+            "Um cabra muda de lado",
+            "O coronel faz acordo com a polícia",
+            "Alguém vende a lista",
+            "A moça escolheu o outro",
+            "O compadre não era tão compadre"
+          ]
+        },
+        {
+          "nome": "Sertão",
+          "itens": [
+            "A seca volta",
+            "Uma trovoada enche o riacho e corta a estrada",
+            "O gado começa a morrer",
+            "Uma cascavel no lugar errado",
+            "A cacimba secou",
+            "Fogo na caatinga"
+          ]
+        },
+        {
+          "nome": "Fé",
+          "itens": [
+            "O beato profetiza o fim de alguém",
+            "O santo cobra a promessa",
+            "Um milagre que ninguém explica",
+            "O padre conta o que ouviu",
+            "A procissão passa no meio da confusão",
+            "O corpo fechado abre"
+          ]
+        },
+        {
+          "nome": "Fama",
+          "itens": [
+            "Sai um cordel contando tudo (errado)",
+            "O retrato do bando sai no jornal",
+            "A recompensa dobra",
+            "Chega gente da capital fazendo perguntas",
+            "A cabeça de alguém vai para exposição",
+            "Alguém assume a culpa por pura vaidade"
+          ]
+        },
+        {
+          "nome": "Destino",
+          "itens": [
+            "Morte de tocaia",
+            "Uma bala que não era para você",
+            "Aparece um filho que ninguém conhecia",
+            "O dinheiro some",
+            "Um ferido que não pode ser deixado para trás",
+            "Dois inimigos precisam se ajudar"
+          ]
+        }
+      ]
+    }
+  ],
+  "preparacaoRapida": [
+    {
+      "tabela": "Relações",
+      "grupos": [
+        {
+          "rotulo": "Para três jogadores",
+          "itens": [
+            "Família: Compadre e comadre",
+            "Cangaço: Cangaceiro e coiteiro",
+            "Romance: A moça que fugiu com o bando e quem ficou para trás"
+          ]
+        },
+        {
+          "rotulo": "Para quatro jogadores, adicione",
+          "itens": [
+            "O Poder: Coronel e afilhado político"
+          ]
+        },
+        {
+          "rotulo": "Para cinco jogadores, adicione",
+          "itens": [
+            "O Passado: Famílias em guerra de sangue há três gerações"
+          ]
+        }
+      ]
+    },
+    {
+      "tabela": "Necessidades",
+      "grupos": [
+        {
+          "rotulo": "Para três jogadores",
+          "itens": [
+            "Enriquecer: …com o ouro que o chefe enterrou"
+          ]
+        },
+        {
+          "rotulo": "Para quatro ou cinco jogadores, adicione",
+          "itens": [
+            "Acertar as contas: …com o coiteiro que te entregou"
+          ]
+        }
+      ]
+    },
+    {
+      "tabela": "Locações",
+      "grupos": [
+        {
+          "rotulo": "Para três, quatro ou cinco jogadores",
+          "itens": [
+            "A vila de Serra Branca: Feira de sábado"
+          ]
+        }
+      ]
+    },
+    {
+      "tabela": "Objetos",
+      "grupos": [
+        {
+          "rotulo": "Para três ou quatro jogadores",
+          "itens": [
+            "Informação: Lista dos coiteiros da região"
+          ]
+        },
+        {
+          "rotulo": "Para cinco jogadores, adicione",
+          "itens": [
+            "Sentimental: Santinho do Padim Ciço"
+          ]
+        }
+      ]
+    }
+  ]
+}

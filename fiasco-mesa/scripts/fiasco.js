@@ -629,23 +629,43 @@ function importarArquivo(dados) {
   return Array.isArray(dados?.cenarios) ? importarPacote(dados) : importarPlayset(dados);
 }
 
+/* Cenários com texto original que vêm dentro do módulo (pasta cenarios/). */
+const CENARIOS_DO_MODULO = [
+  { arquivo: "cangaco.json", nome: "Cangaço — sertão, 1930 (com Virada própria)" }
+];
+
 async function dialogoImportar() {
-  const arquivo = await DialogV2.wait({
+  const opcoes = CENARIOS_DO_MODULO.map((c) => `<option value="${c.arquivo}">${esc(c.nome)}</option>`).join("");
+  const escolha = await DialogV2.wait({
     window: { title: "Fiasco: Importar Cenário" },
+    position: { width: 440 },
     content: `
-      <div class="fiasco-dialogo">
-        <p>Escolha o arquivo <b>.json</b> de um Cenário ou de um pacote (vários Cenários). Ele cria os Diários e as Tabelas de Rolagem.</p>
-        <input type="file" name="arquivo" accept=".json,application/json">
+      <div class="fiasco-dialogo fiasco-importar">
+        <label><b>Cenários que vêm com o módulo</b>
+          <select name="embutido"><option value="">— nenhum —</option>${opcoes}</select>
+        </label>
+        <p class="hint">ou</p>
+        <label><b>Arquivo do seu computador</b> (Cenário ou pacote .json)
+          <input type="file" name="arquivo" accept=".json,application/json">
+        </label>
+        <p class="hint">Cria os Diários e as Tabelas de Rolagem.</p>
       </div>`,
     buttons: [
-      { action: "ok", label: "Importar", default: true, callback: (ev, btn) => btn.form.elements.arquivo.files[0] ?? null },
+      { action: "ok", label: "Importar", default: true,
+        callback: (ev, btn) => ({ embutido: btn.form.elements.embutido.value, arquivo: btn.form.elements.arquivo.files[0] ?? null }) },
       { action: "cancelar", label: "Cancelar" }
     ],
     rejectClose: false
   });
-  if (!(arquivo instanceof File)) return;
+  if (!escolha || typeof escolha !== "object") return;
   try {
-    await importarArquivo(JSON.parse(await arquivo.text()));
+    if (escolha.arquivo instanceof File) return await importarArquivo(JSON.parse(await escolha.arquivo.text()));
+    if (escolha.embutido) {
+      const resp = await fetch(`modules/${MOD}/cenarios/${escolha.embutido}`);
+      if (!resp.ok) throw new Error(`não achei ${escolha.embutido} no módulo`);
+      return await importarArquivo(await resp.json());
+    }
+    ui.notifications.warn("Fiasco: escolha um Cenário da lista ou um arquivo.");
   } catch (e) {
     console.error(e);
     ui.notifications.error(`Fiasco: falha ao importar — ${e.message}`);
@@ -1346,7 +1366,7 @@ Hooks.once("init", () => {
   if (ativo("escrever")) registrarModoEscrita();
   if (ativo("votacao")) registrarBotaoVotacao();
 
-  const api = { abrirVotacao, alternarEscrita, escreverEm, redimensionarDados, criarJogador, dialogoCriarJogador, criarDados, dialogoCriarDados, rolarSelecionados, rolarTodos, rolarTokens, abrirMapa, importarPlayset, importarPacote, importarArquivo, dialogoImportar, definirFace };
+  const api = { CENARIOS_DO_MODULO, abrirVotacao, alternarEscrita, escreverEm, redimensionarDados, criarJogador, dialogoCriarJogador, criarDados, dialogoCriarDados, rolarSelecionados, rolarTodos, rolarTokens, abrirMapa, importarPlayset, importarPacote, importarArquivo, dialogoImportar, definirFace };
   game.modules.get(MOD).api = api;
   globalThis.FiascoMesa = api;
 });

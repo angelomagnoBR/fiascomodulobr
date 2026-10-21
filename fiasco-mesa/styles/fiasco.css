@@ -232,3 +232,7 @@ body.fiasco-escrevendo #board { cursor: crosshair !important; }
 @media (prefers-reduced-motion: reduce) {
   .fiasco-desfecho-caixa img, .fiasco-desfecho-texto { animation: none; }
 }
+
+/* Importar Cenário */
+.fiasco-importar label { display: flex; flex-direction: column; gap: 4px; }
+.fiasco-importar .hint { margin: 0; text-align: center; }
