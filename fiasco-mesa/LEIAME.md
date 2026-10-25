@@ -53,6 +53,8 @@ Quem não vota nem narra (ex.: usuário de transmissão) não vê o painel, só 
 Precisa de um GM conectado (ele faz a contagem). Em *Configurar Módulos* dá para desligar a votação ou fazer o GM não votar (**Mestre também vota**).
 
 ## Texto na mesa: girar e moldura
+> Existe também o módulo separado **Escrita na Mesa**, para usar em qualquer mesa. Se ele estiver ativo no mesmo mundo, a escrita do Fiasco se desliga sozinha e ele assume, sem botão duplicado.
+
 - **Girar**: passe o mouse sobre um texto seu e use **Shift + rodinha** (15° por clique). Ou ajuste o **Giro** na janela do texto.
 - **Moldura**: desligada por padrão. Na janela do texto, marque **Moldura** e escolha cor e espessura.
 

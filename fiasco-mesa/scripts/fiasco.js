@@ -1454,7 +1454,9 @@ Hooks.once("init", () => {
   registrarFichas();
   registrarHooksInterface();
   registrarFontes();
-  if (ativo("escrever")) registrarModoEscrita();
+  // Se o módulo Escrita na Mesa estiver ativo, ele assume a escrita e a do Fiasco fica quieta
+  const escritaPropria = ativo("escrever") && !game.modules.get("escrita-na-mesa")?.active;
+  if (escritaPropria) registrarModoEscrita();
   if (ativo("votacao")) registrarBotaoVotacao();
 
   const api = { CENARIOS_DO_MODULO, abrirVotacao, alternarEscrita, escreverEm, redimensionarDados, criarJogador, dialogoCriarJogador, criarDados, dialogoCriarDados, rolarSelecionados, rolarTodos, rolarTokens, abrirMapa, importarPlayset, importarPacote, importarArquivo, dialogoImportar, definirFace };
@@ -1463,7 +1465,7 @@ Hooks.once("init", () => {
 });
 
 Hooks.once("ready", () => {
-  if (ativo("escrever")) registrarSocket();
+  if (ativo("escrever") && !game.modules.get("escrita-na-mesa")?.active) registrarSocket();
   if (ativo("votacao")) registrarVotacao();
   for (const f of Object.keys(FONTES_MESA)) carregarFonte(f);
 });
