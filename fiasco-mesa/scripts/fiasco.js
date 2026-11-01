@@ -37,7 +37,7 @@ const OPCOES = {
   importador:   { name: "Importador de Cenário", hint: "Mostra o botão 'Importar Cenário' na aba de Diários (só GM).", type: Boolean, default: true, reload: true },
   diceSoNice:   { name: "Usar Dice So Nice", hint: "Anima a rolagem em 3D com dados brancos e pretos (precisa do módulo Dice So Nice).", type: Boolean, default: true, reload: false },
   mensagemChat: { name: "Mensagem no chat", hint: "Mostra no chat o resultado de cada rolagem de dados.", type: Boolean, default: true, reload: false },
-  tamanhoDado:  { name: "Tamanho do token de dado", hint: "Em quadrados da grade (ex.: 1 = um quadrado, 1.5 = um quadrado e meio). Muda na hora os dados que já estão na mesa.", type: Number, default: 1, reload: false, onChange: () => redimensionarDados() },
+  tamanhoDado:  { name: "Tamanho do token de dado", hint: "Em quadrados da grade (ex.: 0.6 = pouco mais de meio quadrado, 1 = um quadrado). Muda na hora os dados que já estão na mesa.", type: Number, default: 0.6, reload: false, onChange: () => redimensionarDados() },
   facesCaminho: { name: "Imagens das faces", hint: "Caminho das faces. Use {cor} (branco/preto) e {valor} (1-6).", type: String, default: `modules/${MOD}/assets/dados/{cor}-{valor}.svg`, reload: false }
 };
 
@@ -168,7 +168,7 @@ function rolarTodos() {
 }
 
 function tamanhoDado() {
-  return Math.max(0.25, Number(ativo("tamanhoDado")) || 1);
+  return Math.max(0.25, Number(ativo("tamanhoDado")) || 0.6);
 }
 
 /** Aplica o tamanho escolhido aos atores base e aos dados de todas as cenas (só o GM executa). */
